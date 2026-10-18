@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CreditMesh — Help & Support</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              navy: '#0b192c',
+              slate: '#1e293b',
+              emerald: '#00875a',
+              teal: '#0d9488',
+              tealDark: '#0b6e64',
+              accent: '#10b981',
+              lightBg: '#f8faff',
+              cardBorder: '#e2e8f0',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      background-color: #f1f5f9;
+    }
+    html { scroll-behavior: smooth; }
+    .faq-answer {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease, padding 0.3s ease;
+    }
+    .faq-open .faq-answer {
+      max-height: 500px;
+      padding-top: 0.75rem;
+    }
+    .faq-chevron {
+      transition: transform 0.3s ease;
+    }
+    .faq-open .faq-chevron {
+      transform: rotate(180deg);
+    }
+    .modal-overlay { transition: opacity 0.3s ease; }
+    .modal-content { transition: transform 0.3s ease, opacity 0.3s ease; }
+    .hidden-modal {
+      opacity: 0 !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+    .hidden-modal .modal-overlay { opacity: 0; pointer-events: none; }
+    .hidden-modal .modal-content { transform: translateY(20px) scale(0.95); opacity: 0; pointer-events: none; }
+    .toast-msg { transition: opacity 0.3s ease, transform 0.3s ease; }
+    .toast-hide { opacity: 0; transform: translateY(10px); pointer-events: none; }
+    
+    /* Page Transition */
+    #helpMainView, #helpDetailView {
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .view-hidden {
+      opacity: 0;
+      transform: translateY(15px);
+      pointer-events: none;
+      position: absolute;
+      width: 100%;
+    }
+  </style>
+</head>
+<body class="min-h-screen text-[#0b192c]">
+
+  <!-- Generic Action Modal -->
+  <div id="actionModal" class="fixed inset-0 z-[100] flex items-center justify-center hidden-modal">
+    <div class="modal-overlay absolute inset-0 bg-[#0b192c]/60 backdrop-blur-sm" onclick="closeActionModal()"></div>
+    <div class="modal-content relative bg-white w-full max-w-md mx-4 rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-200/50 space-y-5">
+      <button onclick="closeActionModal()" class="absolute top-5 right-5 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 transition">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+      <div id="actionModalBody" class="text-center space-y-3"></div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toastContainer" class="fixed bottom-6 right-6 z-[110] flex flex-col gap-2"></div>
+
+  <!-- Navbar -->
+  <nav class="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-xl border-b border-slate-200/60">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <a href="dfinancial_dashboard.html" class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl bg-[#0b192c] flex items-center justify-center shadow-md">
+          <svg class="w-5 h-5 text-teal-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3" fill="#0d9488"></circle><circle cx="4" cy="6" r="2"></circle><circle cx="20" cy="6" r="2"></circle><circle cx="4" cy="18" r="2"></circle><circle cx="20" cy="18" r="2"></circle><path d="M6 7l4 3.5m4 0l4-3.5M6 17l4-3.5m4 0l4 3.5"></path>
+          </svg>
+        </div>
+        <span class="text-lg font-extrabold tracking-tight text-[#0b192c] leading-none hidden sm:block">CreditMesh</span>
+      </a>
+      <div class="hidden md:flex items-center gap-6 text-[13px] font-semibold text-slate-500">
+        <a href="dfinancial_dashboard.html" data-i18n="nav_profile" class="hover:text-[#0b192c] transition">Financial Profile</a>
+        <a href="efinances.html" data-i18n="nav_finances" class="hover:text-[#0b192c] transition">Finances</a>
+        <a href="cmybusiness.html" data-i18n="nav_business" class="hover:text-[#0b192c] transition">Business</a>
+        <a href="financial_options.html" data-i18n="nav_options" class="hover:text-[#0b192c] transition">Financial Options</a>
+        <a href="help.html" data-i18n="nav_help" class="text-[#0b192c] border-b-2 border-teal-500 pb-1 transition">Help</a>
+      </div>
+      <div class="flex items-center gap-3">
+        <!-- Global Language Selector -->
+        <div class="relative">
+          <button id="navLangBtn" onclick="toggleLangNav()" class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 rounded-xl text-xs font-bold text-slate-700 border border-slate-200 transition">
+            <span>🌐</span>
+            <span id="navLangLabel">EN</span>
+            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+          </button>
+          <div id="navLangMenu" class="hidden absolute right-0 mt-2 w-36 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 z-50">
+            <button onclick="changeGlobalLang('English')" class="w-full text-left px-3.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-teal-50 hover:text-teal-700 transition">English</button>
+            <button onclick="changeGlobalLang('Kannada')" class="w-full text-left px-3.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-teal-50 hover:text-teal-700 transition">ಕನ್ನಡ (Kannada)</button>
+            <button onclick="changeGlobalLang('Hindi')" class="w-full text-left px-3.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-teal-50 hover:text-teal-700 transition">हिंदी (Hindi)</button>
+          </div>
+        </div>
+        <button onclick="showNavToast('Notifications')" class="relative text-slate-400 hover:text-slate-600 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V6a6 6 0 00-12 0v8.158c0 .627-.126 1.213-.355 1.737L4 17h5m0 0v1a3 3 0 006 0v-1m-6 0h6z"></path></svg>
+          <span class="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-teal-500 border-2 border-white"></span>
+        </button>
+        <a href="bprofile.html" class="flex items-center gap-2.5 pl-4 border-l border-slate-200">
+          <div class="w-8 h-8 rounded-full bg-slate-200 border-2 border-teal-500 overflow-hidden flex items-center justify-center text-slate-700 font-bold text-[11px] user-avatar-text">RK</div>
+          <div class="hidden lg:block"><span class="text-sm font-bold text-[#0b192c] leading-none block user-name-text">Ravi Kumar</span></div>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content Wrapper -->
+  <div class="relative min-h-screen">
+
+    <!-- ========================================== -->
+    <!-- HELP MAIN VIEW -->
+    <!-- ========================================== -->
+    <main id="helpMainView" class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
+
+      <!-- PAGE HEADER -->
+      <section>
+        <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-[#0b192c]">Help & Support</h1>
+        <p class="text-slate-500 text-base mt-2">Get assistance, find answers, and manage your CreditMesh experience.</p>
+        <div class="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-teal-700">
+          <span class="w-2 h-2 rounded-full bg-teal-500 animate-pulse"></span> Support available today
+        </div>
+      </section>
+
+      <!-- SECTION 1: CONTACT CREDITMESH SUPPORT -->
+      <section class="space-y-6">
+        <h2 class="text-xl font-extrabold text-[#0b192c] tracking-tight">Contact CreditMesh Support</h2>
+        <div class="grid md:grid-cols-2 gap-5">
+          <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+            <div class="flex items-start gap-4 mb-5">
+              <div class="w-11 h-11 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center flex-shrink-0">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243c0 .813.607 1.52 1.393 1.712a18.075 18.075 0 015.107 0c.786.192 1.393.899 1.393 1.712V6.75"></path></svg>
+              </div>
+              <div>
+                <h3 class="text-base font-bold text-[#0b192c]">Email Support</h3>
+                <a href="mailto:support@creditmesh.com" class="text-sm font-semibold text-teal-700 hover:text-teal-800 transition">support@creditmesh.com</a>
+                <p class="text-xs text-slate-500 mt-2 leading-relaxed">Reach out to our support team for account issues, financial profile queries, privacy concerns, and technical assistance.</p>
+              </div>
+            </div>
+            <button onclick="initiateEmail()" class="w-full bg-[#0b192c] hover:bg-slate-800 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition text-sm shadow-sm">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243c0 .813.607 1.52 1.393 1.712a18.075 18.075 0 015.107 0c.786.192 1.393.899 1.393 1.712V6.75"></path></svg>
+              Send Email
+            </button>
+          </div>
+          <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+            <div class="flex items-start gap-4 mb-5">
+              <div class="w-11 h-11 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center flex-shrink-0">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372a2.25 2.25 0 00-1.858-2.215l-3.122-.624a2.25 2.25 0 00-1.94.51l-.584.584a2.25 2.25 0 01-2.658.12l-2.1-1.396a15.75 15.75 0 01-5.388-5.383l-1.396-2.1a2.25 2.25 0 01.12-2.658l.583-.584a2.25 2.25 0 00.512-1.94l-.624-3.122a2.25 2.25 0 00-2.215-1.858H4.5A2.25 2.25 0 002.25 6.75z"></path></svg>
+              </div>
+              <div>
+                <h3 class="text-base font-bold text-[#0b192c]">Emergency Helpline</h3>
+                <a href="tel:+919876543210" class="text-sm font-semibold text-teal-700 hover:text-teal-800 transition">+91 98765 43210</a>
+                <p class="text-xs text-slate-500 mt-2 leading-relaxed">Contact us for urgent account security issues or emergency assistance.</p>
+              </div>
+            </div>
+            <button onclick="initiateCall()" class="w-full bg-[#005f56] hover:bg-[#004e46] text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition text-sm shadow-md shadow-teal-950/10">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372a2.25 2.25 0 00-1.858-2.215l-3.122-.624a2.25 2.25 0 00-1.94.51l-.584.584a2.25 2.25 0 01-2.658.12l-2.1-1.396a15.75 15.75 0 01-5.388-5.383l-1.396-2.1a2.25 2.25 0 01.12-2.658l.583-.584a2.25 2.25 0 00.512-1.94l-.624-3.122a2.25 2.25 0 00-2.215-1.858H4.5A2.25 2.25 0 002.25 6.75z"></path></svg>
+              Call Now
+            </button>
+          </div>
+        </div>
+        <p class="text-xs text-slate-500 font-semibold text-center pt-2">Support Hours: Monday - Saturday | 9:00 AM - 6:00 PM</p>
+      </section>
+
+      <!-- SECTION 2: QUICK HELP CATEGORIES -->
+      <section class="space-y-6">
+        <h2 class="text-xl font-extrabold text-[#0b192c] tracking-tight">Quick Help Categories</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <button onclick="openCategoryModal('Account & Profile', 'Manage your personal details, verification, and financial profile. You can update your KYC, change contact information, and view your profile verification status from this section.', 'Financial Profile')" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col items-start gap-3 text-left w-full">
+            <div class="w-10 h-10 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.762 0-5.375-.622-7.499-1.632z"></path></svg></div>
+            <h3 class="text-sm font-bold text-[#0b192c]">Account & Profile</h3>
+            <p class="text-xs text-slate-500 leading-relaxed flex-1">Manage your personal details, verification, and financial profile.</p>
+            <span class="text-xs font-bold text-teal-700 hover:text-teal-800 transition mt-1">Explore →</span>
+          </button>
+          <button onclick="openCategoryModal('Payments & Transactions', 'Get help with payments, transaction history, and financial records. View past transactions, raise disputes, and understand payment failures.', 'Finances')" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col items-start gap-3 text-left w-full">
+            <div class="w-10 h-10 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.64 60.64 0 0115.558-2.064l1.167 1.169a1.21 1.21 0 001.742 0l1.167-1.169a60.64 60.64 0 0115.558 2.064M2.25 6.75a60.64 60.64 0 0115.558 2.064l1.167-1.169a1.21 1.21 0 00-1.742 0l-1.167 1.169a60.64 60.64 0 00-15.558 2.064m0 0V18.75"></path></svg></div>
+            <h3 class="text-sm font-bold text-[#0b192c]">Payments & Transactions</h3>
+            <p class="text-xs text-slate-500 leading-relaxed flex-1">Get help with payments, transaction history, and financial records.</p>
+            <span class="text-xs font-bold text-teal-700 hover:text-teal-800 transition mt-1">Explore →</span>
+          </button>
+          <button onclick="openCategoryModal('Privacy & Security', 'Control your data permissions and understand how your information is protected. Manage consent settings and revoke data access.', 'Privacy Center')" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col items-start gap-3 text-left w-full">
+            <div class="w-10 h-10 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.955 11.955 0 0112 2.944a11.955 11.955 0 00-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg></div>
+            <h3 class="text-sm font-bold text-[#0b192c]">Privacy & Security</h3>
+            <p class="text-xs text-slate-500 leading-relaxed flex-1">Control your data permissions and understand how your information is protected.</p>
+            <span class="text-xs font-bold text-teal-700 hover:text-teal-800 transition mt-1">Explore →</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- SECTION 3: FAQ -->
+      <section class="space-y-5">
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div>
+            <h2 class="text-xl font-extrabold text-[#0b192c] tracking-tight">Questions Usually Asked By Users</h2>
+            <p class="text-xs text-slate-500 mt-1">Find answers to common questions about CreditMesh.</p>
+          </div>
+          <div class="relative w-full sm:w-72">
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"></path></svg>
+            <input id="faqSearch" type="text" placeholder="Search FAQs..." onkeyup="filterFaqs()" class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-[#0b192c] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/50 bg-white transition">
+          </div>
+        </div>
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden divide-y divide-slate-100">
+          <div class="faq-item px-5 py-4 cursor-pointer hover:bg-slate-50 transition" onclick="toggleFaq(this)"><div class="flex items-center justify-between gap-4"><h3 class="text-sm font-bold text-[#0b192c]">What is CreditMesh?</h3><svg class="faq-chevron w-4 h-4 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg></div><div class="faq-answer text-xs text-slate-600 leading-relaxed">CreditMesh is a financial inclusion platform that helps users build a financial identity using their authorized financial behaviour such as income patterns, payment history, savings habits, and cash flow information.</div></div>
+          <div class="faq-item px-5 py-4 cursor-pointer hover:bg-slate-50 transition" onclick="toggleFaq(this)"><div class="flex items-center justify-between gap-4"><h3 class="text-sm font-bold text-[#0b192c]">How does CreditMesh calculate my Financial Reliability Score?</h3><svg class="faq-chevron w-4 h-4 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg></div><div class="faq-answer text-xs text-slate-600 leading-relaxed">CreditMesh analyses income consistency, payment reliability, savings behaviour, transaction activity, and cash flow stability to generate an explainable financial profile.</div></div>
+          <div class="faq-item px-5 py-4 cursor-pointer hover:bg-slate-50 transition" onclick="toggleFaq(this)"><div class="flex items-center justify-between gap-4"><h3 class="text-sm font-bold text-[#0b192c]">Does CreditMesh provide loans directly?</h3><svg class="faq-chevron w-4 h-4 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg></div><div class="faq-answer text-xs text-slate-600 leading-relaxed">No. CreditMesh does not directly provide loans. It connects users with potentially suitable financial options from financial institutions.</div></div>
+          <div class="faq-item px-5 py-4 cursor-pointer hover:bg-slate-50 transition" onclick="toggleFaq(this)"><div class="flex items-center justify-between gap-4"><h3 class="text-sm font-bold text-[#0b192c]">Is my financial data safe?</h3><svg class="faq-chevron w-4 h-4 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg></div><div class="faq-answer text-xs text-slate-600 leading-relaxed">Yes. CreditMesh follows a privacy-first approach where users control their data permissions and decide what information can be accessed.</div></div>
+          <div class="faq-item px-5 py-4 cursor-pointer hover:bg-slate-50 transition" onclick="toggleFaq(this)"><div class="flex items-center justify-between gap-4"><h3 class="text-sm font-bold text-[#0b192c]">How can I improve my financial profile?</h3><svg class="faq-chevron w-4 h-4 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg></div><div class="faq-answer text-xs text-slate-600 leading-relaxed">You can improve your profile by maintaining regular payments, managing expenses, building savings habits, and maintaining consistent financial records.</div></div>
+        </div>
+      </section>
+
+      <!-- SECTION 4: CONTACT FORM -->
+      <section class="space-y-5">
+        <h2 class="text-xl font-extrabold text-[#0b192c] tracking-tight">Still Need Help?</h2>
+        <div class="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm">
+          <p class="text-sm text-slate-500 mb-6">Submit your query and our support team will respond.</p>
+          <form id="supportForm" onsubmit="handleFormSubmit(event)" class="space-y-5">
+            <div class="grid md:grid-cols-2 gap-5">
+              <div><label class="text-xs font-bold text-slate-600 block mb-1.5">Full Name</label><input type="text" required placeholder="Ravi Kumar" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium text-[#0b192c] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition"></div>
+              <div><label class="text-xs font-bold text-slate-600 block mb-1.5">Email Address</label><input type="email" required placeholder="ravi@example.com" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium text-[#0b192c] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition"></div>
+            </div>
+            <div class="grid md:grid-cols-2 gap-5">
+              <div><label class="text-xs font-bold text-slate-600 block mb-1.5">Phone Number</label><input type="tel" required placeholder="+91 98765 43210" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium text-[#0b192c] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition"></div>
+              <div><label class="text-xs font-bold text-slate-600 block mb-1.5">Issue Type</label><select required class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium text-[#0b192c] focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition appearance-none bg-white"><option value="" disabled selected>Select Issue Type</option><option>Account Issue</option><option>Payment Problem</option><option>Transaction Issue</option><option>Financial Profile</option><option>Privacy Concern</option><option>Technical Issue</option><option>Other</option></select></div>
+            </div>
+            <div><label class="text-xs font-bold text-slate-600 block mb-1.5">Message</label><textarea required rows="4" placeholder="Describe your issue..." class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium text-[#0b192c] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition resize-none"></textarea></div>
+            <div class="flex items-center justify-end gap-4 pt-2">
+              <button type="submit" class="bg-[#005f56] hover:bg-[#004e46] text-white font-bold py-3.5 px-8 rounded-xl flex items-center justify-center gap-2 shadow-md shadow-teal-950/10 transition text-sm">Submit Request <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg></button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- SECTION 5: EMERGENCY SUPPORT CARD -->
+      <section class="bg-[#0b192c] text-white p-6 sm:p-8 rounded-3xl shadow-xl relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-64 h-64 bg-teal-500/10 rounded-full -translate-y-1/2 translate-x-1/3 blur-2xl"></div>
+        <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div class="space-y-3 flex-1">
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-red-500/10 border border-red-500/20 rounded-full text-xs font-bold text-red-300"><span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span> Urgent</div>
+            <h2 class="text-2xl font-extrabold tracking-tight">Need Urgent Assistance?</h2>
+            <p class="text-sm text-slate-300 leading-relaxed">For account security issues, suspicious activity, or critical problems, contact our support team immediately.</p>
+            <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 pt-2 text-sm">
+              <span class="flex items-center gap-2 text-slate-300"><svg class="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372a2.25 2.25 0 00-1.858-2.215l-3.122-.624a2.25 2.25 0 00-1.94.51l-.584.584a2.25 2.25 0 01-2.658.12l-2.1-1.396a15.75 15.75 0 01-5.388-5.383l-1.396-2.1a2.25 2.25 0 01.12-2.658l.583-.584a2.25 2.25 0 00.512-1.94l-.624-3.122a2.25 2.25 0 00-2.215-1.858H4.5A2.25 2.25 0 002.25 6.75z"></path></svg> +91 98765 43210</span>
+              <span class="flex items-center gap-2 text-slate-300"><svg class="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243c0 .813.607 1.52 1.393 1.712a18.075 18.075 0 015.107 0c.786.192 1.393.899 1.393 1.712V6.75"></path></svg> support@creditmesh.com</span>
+            </div>
+          </div>
+          <div class="flex flex-col sm:flex-row gap-3 flex-shrink-0">
+            <button onclick="initiateCall()" class="bg-white hover:bg-slate-100 text-[#0b192c] font-bold py-3 px-6 rounded-xl flex items-center justify-center gap-2 transition text-sm shadow-sm">Call Support</button>
+            <button onclick="initiateEmail()" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-6 rounded-xl flex items-center justify-center gap-2 transition text-sm shadow-md">Email Support</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 6: HELP RESOURCES (Interactive) -->
+      <section class="space-y-6">
+        <h2 class="text-xl font-extrabold text-[#0b192c] tracking-tight">Help Resources</h2>
+        <div class="grid md:grid-cols-3 gap-4">
+          <button onclick="openGuidePage('profile')" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition cursor-pointer group text-left w-full">
+            <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-3"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h8.25m-8.25 3H12M10.5 19.5h3.75m-1.875 0H12M3.75 6.75h16.5"></path></svg></div>
+            <h3 class="text-sm font-bold text-[#0b192c] group-hover:text-teal-700 transition">Financial Profile Guide</h3>
+            <p class="text-xs text-slate-500 leading-relaxed mt-1.5">Learn how your Financial Reliability Score works.</p>
+          </button>
+          <button onclick="openGuidePage('privacy')" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition cursor-pointer group text-left w-full">
+            <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.955 11.955 0 0112 2.944a11.955 11.955 0 00-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg></div>
+            <h3 class="text-sm font-bold text-[#0b192c] group-hover:text-teal-700 transition">Privacy Guide</h3>
+            <p class="text-xs text-slate-500 leading-relaxed mt-1.5">Understand your data permissions and security.</p>
+          </button>
+          <button onclick="openGuidePage('getting-started')" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition cursor-pointer group text-left w-full">
+            <div class="w-9 h-9 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center mb-3"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147A60.438 60.438 0 0110.762 6.23c.861-.18 1.74-.272 2.624-.306A23.379 23.379 0 0115.56 6.2c.883.034 1.763.126 2.624.306A60.44 60.44 0 0124.74 10.147"></path></svg></div>
+            <h3 class="text-sm font-bold text-[#0b192c] group-hover:text-teal-700 transition">Getting Started Guide</h3>
+            <p class="text-xs text-slate-500 leading-relaxed mt-1.5">Learn how to use CreditMesh features.</p>
+          </button>
+        </div>
+      </section>
+    </main>
+
+    <!-- ========================================== -->
+    <!-- HELP DETAIL VIEW (Dynamic Content) -->
+    <!-- ========================================== -->
+    <main id="helpDetailView" class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10 view-hidden">
+      <div id="guideContent"></div>
+    </main>
+
+  </div>
+
+  <script>
+    // --- Toast Notification System ---
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      const colors = type === 'success' ? 'bg-emerald-600' : 'bg-[#0b192c]';
+      toast.className = `toast-msg ${colors} text-white px-5 py-3 rounded-xl shadow-lg text-sm font-semibold flex items-center gap-2`;
+      const icon = type === 'success' 
+        ? '<svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>' 
+        : '<svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+      toast.innerHTML = `${icon} <span>${message}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => { toast.classList.add('toast-hide'); setTimeout(() => toast.remove(), 300); }, 3000);
+    }
+
+    // --- Modal Logic ---
+    function openActionModal(content) {
+      document.getElementById('actionModalBody').innerHTML = content;
+      document.getElementById('actionModal').classList.remove('hidden-modal');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeActionModal() {
+      document.getElementById('actionModal').classList.add('hidden-modal');
+      document.body.style.overflow = '';
+    }
+    function openCategoryModal(title, description, route) {
+      openActionModal(`
+        <div class="w-12 h-12 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center mx-auto mb-3"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a8.25 8.25 0 00-5.34-5.34L0 9l2.846-.813a8.25 8.25 0 005.34-5.34L9 3l.813 2.846a8.25 8.25 0 005.34 5.34L18.75 9l-2.846.813a8.25 8.25 0 00-5.34 5.34z"></path></svg></div>
+        <h3 class="text-lg font-bold text-[#0b192c]">${title}</h3>
+        <p class="text-sm text-slate-600 leading-relaxed">${description}</p>
+        <button onclick="handleRoute('${route}')" class="w-full bg-[#005f56] hover:bg-[#004e46] text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-md transition text-sm mt-2">Go to ${route} <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg></button>
+      `);
+    }
+
+    // --- Routing Logic ---
+    function handleRoute(route) {
+      closeActionModal();
+      if (route === 'Financial Profile') window.location.href = 'dfinancial_dashboard.html';
+      else if (route === 'Finances') window.location.href = 'efinances.html';
+      else if (route === 'Business') window.location.href = 'cmybusiness.html';
+      else if (route === 'Financial Options') window.location.href = 'financial_options.html';
+      else if (route === 'Privacy Center' || route === 'Profile Settings') window.location.href = 'bprofile.html';
+      else showToast(`Navigating to ${route}...`, 'info');
+    }
+    function showNavToast(page) {
+      if (page === 'Notifications') showToast('No new notifications', 'info');
+      else if (page === 'Profile Settings') window.location.href = 'bprofile.html';
+      else showToast(`Navigating to ${page}...`, 'info');
+    }
+    function initiateCall() { showToast('Initiating secure call...', 'info'); setTimeout(() => { window.location.href = 'tel:+919876543210'; }, 600); }
+    function initiateEmail() { showToast('Opening email client...', 'info'); setTimeout(() => { window.location.href = 'mailto:support@creditmesh.com'; }, 600); }
+
+    // --- FAQ Logic ---
+    function toggleFaq(element) {
+      const isOpen = element.classList.contains('faq-open');
+      document.querySelectorAll('.faq-item').forEach(item => item.classList.remove('faq-open'));
+      if (!isOpen) element.classList.add('faq-open');
+    }
+    function filterFaqs() {
+      const query = document.getElementById('faqSearch').value.toLowerCase();
+      document.querySelectorAll('.faq-item').forEach(item => {
+        item.style.display = item.querySelector('h3').innerText.toLowerCase().includes(query) ? '' : 'none';
+      });
+    }
+
+    // --- Form Logic ---
+    function handleFormSubmit(event) {
+      event.preventDefault();
+      const btn = event.target.querySelector('button[type="submit"]');
+      btn.innerHTML = `<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Processing...`;
+      btn.disabled = true;
+      setTimeout(() => { btn.innerHTML = `Submit Request <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>`; btn.disabled = false; event.target.reset(); showToast('Support request submitted successfully!'); }, 1500);
+    }
+
+    // --- Guide Page Routing & Rendering ---
+    function openGuidePage(type) {
+      const mainView = document.getElementById('helpMainView');
+      const detailView = document.getElementById('helpDetailView');
+      const contentDiv = document.getElementById('guideContent');
+      
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      
+      setTimeout(() => {
+        mainView.classList.add('view-hidden');
+        
+        if (type === 'getting-started') contentDiv.innerHTML = renderGettingStarted();
+        else if (type === 'profile') contentDiv.innerHTML = renderProfileGuide();
+        else if (type === 'privacy') contentDiv.innerHTML = renderPrivacyGuide();
+        
+        detailView.classList.remove('view-hidden');
+      }, 150);
+    }
+
+    function backToHelpCenter() {
+      const mainView = document.getElementById('helpMainView');
+      const detailView = document.getElementById('helpDetailView');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setTimeout(() => {
+        detailView.classList.add('view-hidden');
+        mainView.classList.remove('view-hidden');
+      }, 150);
+    }
+
+    // Templating Helpers
+    const headerTemplate = (title, subtitle) => `
+      <button onclick="backToHelpCenter()" class="flex items-center gap-2 text-sm font-bold text-teal-700 hover:text-teal-800 transition mb-6 group">
+        <svg class="w-4 h-4 transition group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+        Back to Help Center
+      </button>
+      <h1 class( class="text-3xl sm:text-4xl font-extrabold tracking-tight text-[#0b192c]">${title}</h1>
+      <p class="text-slate-500 text-base mt-2">${subtitle}</p>
+    `;
+
+    const sectionTitle = (title) => `<h2 class="text-xl font-extrabold text-[#0b192c] tracking-tight pt-4">${title}</h2>`;
+
+    const supportCard = () => `
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm mt-4">
+        <p class="text-sm text-slate-600 mb-4">Still have questions? Our support team is available to assist you.</p>
+        <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 text-sm mb-5">
+          <span class="flex items-center gap-2 text-slate-600"><svg class="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243c0 .813.607 1.52 1.393 1.712a18.075 18.075 0 015.107 0c.786.192 1.393.899 1.393 1.712V6.75"></path></svg> <strong>support@creditmesh.com</strong></span>
+          <span class="flex items-center gap-2 text-slate-600"><svg class="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372a2.25 2.25 0 00-1.858-2.215l-3.122-.624a2.25 2.25 0 00-1.94.51l-.584.584a2.25 2.25 0 01-2.658.12l-2.1-1.396a15.75 15.75 0 01-5.388-5.383l-1.396-2.1a2.25 2.25 0 01.12-2.658l.583-.584a2.25 2.25 0 00.512-1.94l-.624-3.122a2.25 2.25 0 00-2.215-1.858H4.5A2.25 2.25 0 002.25 6.75z"></path></svg> <strong>+91 98765 43210</strong></span>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-3">
+          <button onclick="initiateEmail()" class="bg-[#0b192c] hover:bg-slate-800 text-white font-bold py-2.5 px-5 rounded-xl flex items-center justify-center gap-2 transition text-sm shadow-sm">Email Support</button>
+          <button onclick="initiateCall()" class="bg-[#005f56] hover:bg-[#004e46] text-white font-bold py-2.5 px-5 rounded-xl flex items-center justify-center gap-2 transition text-sm shadow-md shadow-teal-950/10">Call Support</button>
+        </div>
+      </div>
+    `;
+
+    // --- Guide Content Generators ---
+    function renderGettingStarted() {
+      return `
+        <section class="space-y-10">
+          ${headerTemplate('Getting Started with CreditMesh', 'Learn how to use CreditMesh and understand your financial profile.')}
+          
+          <div class="space-y-4">
+            ${sectionTitle('What is CreditMesh?')}
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm text-sm text-slate-600 leading-relaxed space-y-3">
+              <p>CreditMesh is an AI-powered financial inclusion platform that helps gig workers, street vendors, and small businesses build a financial identity.</p>
+              <p>It analyses authorized financial behaviour such as:</p>
+              <ul class="list-disc list-inside space-y-1.5 text-slate-700 font-medium pl-2">
+                <li>Income patterns</li><li>Payment history</li><li>Savings habits</li><li>Cash flow activity</li><li>Invoice records</li>
+              </ul>
+              <p>to create an explainable Financial Reliability Profile.</p>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            ${sectionTitle('How CreditMesh Works')}
+            <div class="space-y-4 relative">
+              <div class="absolute left-[19px] top-6 bottom-6 w-0.5 bg-slate-200 hidden md:block"></div>
+              <div class="flex gap-5 items-start">
+                <div class="w-10 h-10 rounded-full bg-[#0b192c] text-white flex items-center justify-center font-bold text-sm flex-shrink-0 relative z-10 shadow-md">1</div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex-1">
+                  <h3 class="text-sm font-bold text-[#0b192c]">Connect Your Financial Information</h3>
+                  <p class="text-xs text-slate-500 mt-1 leading-relaxed">Securely connect your authorized financial sources such as transaction records, income details, and invoice information.</p>
+                </div>
+              </div>
+              <div class="flex gap-5 items-start">
+                <div class="w-10 h-10 rounded-full bg-[#0b192c] text-white flex items-center justify-center font-bold text-sm flex-shrink-0 relative z-10 shadow-md">2</div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex-1">
+                  <h3 class="text-sm font-bold text-[#0b192c]">Build Your Financial Profile</h3>
+                  <p class="text-xs text-slate-500 mt-1 leading-relaxed">CreditMesh AI analyses your financial behaviour and generates your Financial Reliability Score.</p>
+                </div>
+              </div>
+              <div class="flex gap-5 items-start">
+                <div class="w-10 h-10 rounded-full bg-[#0b192c] text-white flex items-center justify-center font-bold text-sm flex-shrink-0 relative z-10 shadow-md">3</div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex-1">
+                  <h3 class="text-sm font-bold text-[#0b192c]">Understand Your Financial Health</h3>
+                  <p class="text-xs text-slate-500 mt-1 leading-relaxed">View your income, expenses, savings, and cash flow trends.</p>
+                </div>
+              </div>
+              <div class="flex gap-5 items-start">
+                <div class="w-10 h-10 rounded-full bg-[#0b192c] text-white flex items-center justify-center font-bold text-sm flex-shrink-0 relative z-10 shadow-md">4</div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex-1">
+                  <h3 class="text-sm font-bold text-[#0b192c]">Explore Suitable Financial Options</h3>
+                  <p class="text-xs text-slate-500 mt-1 leading-relaxed">Based on your financial profile, CreditMesh helps you discover potentially suitable financial products from financial institutions.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            ${sectionTitle('Understanding Your Dashboard')}
+            <div class="grid sm:grid-cols-2 gap-4">
+              <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
+                <div class="w-8 h-8 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.762 0-5.375-.622-7.499-1.632z"></path></svg></div>
+                <h3 class="text-sm font-bold text-[#0b192c]">Financial Profile</h3>
+                <p class="text-xs text-slate-500 leading-relaxed">View your Financial Reliability Score and understand factors affecting your profile.</p>
+              </div>
+              <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
+                <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.64 60.64 0 0115.558-2.064l1.167 1.169a1.21 1.21 0 001.742 0l1.167-1.169a60.64 60.64 0 0115.558 2.064M2.25 6.75a60.64 60.64 0 0115.558 2.064l1.167-1.169a1.21 1.21 0 00-1.742 0l-1.167 1.169a60.64 60.64 0 00-15.558 2.064m0 0V18.75"></path></svg></div>
+                <h3 class="text-sm font-bold text-[#0b192c]">Finances</h3>
+                <p class="text-xs text-slate-500 leading-relaxed">Track income, expenses, savings, transactions, and cash flow.</p>
+              </div>
+              <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
+                <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0114.25 9.75v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h8.25m-8.25 3H12M10.5 19.5h3.75m-1.875 0H12M3.75 6.75h16.5"></path></svg></div>
+                <h3 class="text-sm font-bold text-[#0b192c]">Business</h3>
+                <p class="text-xs text-slate-500 leading-relaxed">Manage business income, invoices, and financial activity.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            ${sectionTitle('How to Improve Your Financial Profile')}
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+              <div class="flex items-center gap-3 text-sm text-slate-700"><svg class="w-5 h-5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg> Maintain consistent income records</div>
+              <div class="flex items-center gap-3 text-sm text-slate-700"><svg class="w-5 h-5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg> Make payments on time</div>
+              <div class="flex items-center gap-3 text-sm text-slate-700"><svg class="w-5 h-5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg> Track your expenses regularly</div>
+              <div class="flex items-center gap-3 text-sm text-slate-700"><svg class="w-5 h-5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg> Build savings habits</div>
+              <div class="flex items-center gap-3 text-sm text-slate-700"><svg class="w-5 h-5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg> Keep invoice records updated</div>
+              <div class="flex items-center gap-3 text-sm text-slate-700"><svg class="w-5 h-5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg> Review AI recommendations</div>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            ${sectionTitle('Privacy and Data Protection')}
+            <div class="bg-blue-50/70 p-6 rounded-2xl border border-blue-100 space-y-4">
+              <h3 class="text-lg font-bold text-[#0b192c]">Your Data, Your Control</h3>
+              <p class="text-sm text-slate-600 leading-relaxed">CreditMesh follows a privacy-first approach. Users can:</p>
+              <ul class="list-disc list-inside text-sm text-slate-700 space-y-1.5 font-medium pl-2">
+                <li>Choose what information to share</li><li>View how data is used</li><li>Manage permissions</li><li>Revoke access anytime</li>
+              </ul>
+              <button onclick="handleRoute('Privacy Center')" class="bg-[#0b192c] hover:bg-slate-800 text-white font-bold py-2.5 px-5 rounded-xl flex items-center justify-center gap-2 transition text-sm shadow-sm mt-2">Manage Privacy Settings <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg></button>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            ${sectionTitle('Need More Help?')}
+            ${supportCard()}
+          </div>
+        </section>
+      `;
+    }
+
+    function renderProfileGuide() {
+      return `
+        <section class="space-y-10">
+          ${headerTemplate('Financial Profile Guide', 'Understand your Financial Reliability Score and what influences it.')}
+          
+          <div class="space-y-4">
+            ${sectionTitle('What is the Financial Reliability Score?')}
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm text-sm text-slate-600 leading-relaxed space-y-3">
+              <p>Your Financial Reliability Score is a metric from 0-100 generated by CreditMesh AI to represent your financial health and consistency.</p>
+              <p>It helps financial institutions understand your profile without relying on traditional credit scores or salary slips.</p>
+              <div class="mt-4 flex items-center gap-4 p-4 bg-slate-50 rounded-xl border border-slate-100">
+                <span class="text-4xl font-extrabold text-[#0b192c]">81</span>
+                <div>
+                  <span class="text-sm font-bold text-emerald-600">Strong Profile</span>
+                  <p class="text-xs text-slate-500 mt-0.5">Example Score (Ravi K.)</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            ${sectionTitle('Score Factors')}
+            <div class="space-y-3">
+              <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between"><span class="text-sm font-bold text-[#0b192c]">Income Stability</span><span class="text-xs font-bold text-emerald-600">Strong</span></div>
+              <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between"><span class="text-sm font-bold text-[#0b192c]">Payment Reliability</span><span class="text-xs font-bold text-emerald-600">Very High</span></div>
+              <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between"><span class="text-sm font-bold text-[#0b192c]">Savings Discipline</span><span class="text-xs font-bold text-amber-600">Improving</span></div>
+              <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between"><span class="text-sm font-bold text-[#0b192c]">Cashflow Stability</span><span class="text-xs font-bold text-emerald-600">High</span></div>
+              <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between"><span class="text-sm font-bold text-[#0b192c]">Business Consistency</span><span class="text-xs font-bold text-emerald-600">Strong</span></div>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            ${sectionTitle('How to Improve Your Score')}
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+              <div class="flex items-center gap-3 text-sm text-slate-700"><svg class="w-5 h-5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg> Maintain consistent income records</div>
+              <div class="flex items-center gap-3 text-sm text-slate-700"><svg class="w-5 h-5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg> Make payments on time</div>
+              <div class="flex items-center gap-3 text-sm text-slate-700"><svg class="w-5 h-5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg> Build savings habits gradually</div>
+              <div class="flex items-center gap-3 text-sm text-slate-700"><svg class="w-5 h-5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg> Keep business invoices updated</div>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            ${sectionTitle('Need More Help?')}
+            ${supportCard()}
+          </div>
+        </section>
+      `;
+    }
+
+    function renderPrivacyGuide() {
+      return `
+        <section class="space-y-10">
+          ${headerTemplate('Privacy & Security Guide', 'Understand how CreditMesh protects your data and respects your consent.')}
+          
+          <div class="space-y-4">
+            ${sectionTitle('Consent Management')}
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm text-sm text-slate-600 leading-relaxed space-y-3">
+              <p>CreditMesh operates on an explicit consent basis. We only analyze data sources that you explicitly authorize.</p>
+              <p>You can grant or revoke access to specific financial streams at any time from the Privacy Center. Revoking access will stop future analysis using that data source.</p>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            ${sectionTitle('Data Usage & Permissions')}
+            <div class="space-y-3">
+              <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+                <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.955 11.955 0 0112 2.944a11.955 11.955 0 00-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg></div>
+                <div><h3 class="text-sm font-bold text-[#0b192c]">256-bit Encryption</h3><p class="text-xs text-slate-500">All data is encrypted in transit and at rest.</p></div>
+              </div>
+              <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+                <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg></div>
+                <div><h3 class="text-sm font-bold text-[#0b192c]">Zero Data Sharing</h3><p class="text-xs text-slate-500">We never share your data without explicit permission.</p></div>
+              </div>
+              <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+                <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg></div>
+                <div><h3 class="text-sm font-bold text-[#0b192c]">Revocable Access</h3><p class="text-xs text-slate-500">Disconnect any data source instantly.</p></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            ${sectionTitle('Security Architecture')}
+            <div class="bg-blue-50/70 p-6 rounded-2xl border border-blue-100 text-sm text-slate-600 leading-relaxed space-y-3">
+              <p>CreditMesh follows a privacy-first architecture. Your data is used solely to generate your financial profile and provide you with insights.</p>
+              <p>We do not sell your data. We do not make final lending decisions. We are an informational profile provider.</p>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            ${sectionTitle('Need More Help?')}
+            ${supportCard()}
+          </div>
+        </section>
+      `;
+    }
+
+    // --- Event Listeners ---
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeActionModal(); });
+  </script>
+<script src="js/translations.js"></script>
+<script src="js/api.js"></script>
+</body>
+</html>

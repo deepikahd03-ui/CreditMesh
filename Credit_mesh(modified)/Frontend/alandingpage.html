@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CreditMesh — Sovereign Financial Identity</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="js/translations.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'] },
+          colors: {
+            brand: { navy: '#0b192c', slate: '#1e293b', emerald: '#00875a', teal: '#0d9488', tealDark: '#0b6e64', accent: '#10b981', lightBg: '#f8faff', cardBorder: '#e2e8f0' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; -webkit-font-smoothing: antialiased; background-color: #f8faff; }
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .otp-input { caret-color: #0d9488; }
+    .otp-input:focus { border-color: #0d9488; box-shadow: 0 0 0 3px rgba(13,148,136,0.15); }
+    .step-panel { display: none; }
+    .step-panel.active { display: flex; }
+    @keyframes fadeSlideIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-step { animation: fadeSlideIn 0.35s cubic-bezier(0.22,1,0.36,1) forwards; }
+    @keyframes pulseRing { 0% { transform: scale(0.8); opacity: 1; } 100% { transform: scale(2.2); opacity: 0; } }
+    .pulse-ring { animation: pulseRing 1.8s cubic-bezier(0.22,1,0.36,1) infinite; }
+    @keyframes checkDraw { from { stroke-dashoffset: 48; } to { stroke-dashoffset: 0; } }
+    .check-draw { stroke-dasharray: 48; stroke-dashoffset: 48; animation: checkDraw 0.5s 0.3s ease forwards; }
+    @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+    .shimmer-btn { background: linear-gradient(90deg, #005f56 0%, #00875a 50%, #005f56 100%); background-size: 200% 100%; }
+    .shimmer-btn:hover { animation: shimmer 1.5s ease infinite; }
+    .profile-card { transition: all 0.25s cubic-bezier(0.22,1,0.36,1); }
+    .profile-card.selected { border-color: #0d9488; background: #f0fdfa; box-shadow: 0 0 0 3px rgba(13,148,136,0.12); }
+    .consent-toggle { transition: background 0.2s ease; }
+    .consent-toggle.on { background: #0d9488; }
+    .consent-toggle.on .toggle-knob { transform: translateX(18px); }
+    .toggle-knob { transition: transform 0.2s ease; }
+    @keyframes heroFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+    .hero-float { animation: heroFloat 4s ease-in-out infinite; }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-in-up { animation: fadeInUp 0.6s cubic-bezier(0.22,1,0.36,1) forwards; }
+    .fade-in-up-d1 { animation-delay: 0.1s; opacity: 0; }
+    .fade-in-up-d2 { animation-delay: 0.2s; opacity: 0; }
+    .fade-in-up-d3 { animation-delay: 0.3s; opacity: 0; }
+    .fade-in-up-d4 { animation-delay: 0.4s; opacity: 0; }
+    .view-section { display: none; }
+    .view-section.active { display: block; }
+
+    /* How To Use Modal */
+    .modal-overlay { opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+    .modal-overlay.open { opacity: 1; pointer-events: auto; }
+    .modal-content { transform: translateY(30px) scale(0.97); transition: transform 0.35s cubic-bezier(0.22,1,0.36,1); }
+    .modal-overlay.open .modal-content { transform: translateY(0) scale(1); }
+
+    /* Flowchart timeline line */
+    .flow-line { position: absolute; left: 23px; top: 48px; bottom: 48px; width: 3px; background: linear-gradient(to bottom, #0d9488, #10b981, #0d9488); border-radius: 2px; }
+    .flow-node { position: relative; }
+    .flow-dot { position: absolute; left: 12px; top: 6px; width: 25px; height: 25px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; z-index: 2; }
+  </style>
+</head>
+<body class="min-h-screen">
+
+  <!-- ============================================================ -->
+  <!-- HOW TO USE MODAL                                             -->
+  <!-- ============================================================ -->
+  <div id="howToUseModal" class="modal-overlay fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6" onclick="if(event.target===this)closeHowToUse()">
+    <div class="absolute inset-0 bg-[#0b192c]/60 backdrop-blur-sm"></div>
+    <div class="modal-content relative bg-[#f8faff] rounded-3xl shadow-2xl border border-slate-200/80 w-full max-w-lg max-h-[90vh] overflow-y-auto hide-scrollbar">
+
+      <!-- Modal Header -->
+      <div class="sticky top-0 bg-[#f8faff]/95 backdrop-blur-md z-10 px-6 pt-6 pb-4 border-b border-slate-100">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center">
+              <svg class="w-5 h-5 text-teal-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7"/></svg>
+            </div>
+            <div>
+              <h2 class="text-xl font-extrabold text-[#0b192c] tracking-tight">How to Use CreditMesh</h2>
+              <p class="text-xs text-slate-500 font-medium mt-0.5">5 steps to your sovereign financial identity</p>
+            </div>
+          </div>
+          <button onclick="closeHowToUse()" class="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-700 transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Flowchart Body -->
+      <div class="px-6 py-6">
+        <div class="relative pl-14">
+
+          <!-- Vertical Timeline Line -->
+          <div class="flow-line"></div>
+
+          <!-- Step 1 -->
+          <div class="flow-node pb-8">
+            <div class="flow-dot bg-teal-600 text-white shadow-md shadow-teal-600/30">1</div>
+            <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+              <div class="flex items-center gap-2 mb-2"><span class="text-lg">🛵</span><h3 class="font-bold text-[#0b192c] text-base">Create Account</h3></div>
+              <p class="text-sm text-slate-600 leading-relaxed">Sign up and tell us how you earn — gig work, freelancing, vending, or micro-business.</p>
+              <div class="mt-3 flex items-center gap-1.5 text-xs text-teal-700 font-semibold"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg><span>Takes under 2 minutes</span></div>
+            </div>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="flow-node pb-8">
+            <div class="flow-dot bg-teal-600 text-white shadow-md shadow-teal-600/30">2</div>
+            <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+              <div class="flex items-center gap-2 mb-2"><span class="text-lg">🔗</span><h3 class="font-bold text-[#0b192c] text-base">Connect & Give Consent</h3></div>
+              <p class="text-sm text-slate-600 leading-relaxed">Choose the financial data you want to share. You stay in control — pause or revoke access anytime.</p>
+              <div class="mt-3 flex items-center gap-1.5 text-xs text-teal-700 font-semibold"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg><span>Consented Data • Borrower-Controlled Access</span></div>
+            </div>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="flow-node pb-8">
+            <div class="flow-dot bg-teal-600 text-white shadow-md shadow-teal-600/30">3</div>
+            <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+              <div class="flex items-center gap-2 mb-2"><span class="text-lg">🧠</span><h3 class="font-bold text-[#0b192c] text-base">Build Your Financial Profile</h3></div>
+              <p class="text-sm text-slate-600 leading-relaxed">CreditMesh AI analyses your consented financial behavior and generates an explainable financial reliability profile.</p>
+              <div class="mt-3 flex items-center gap-1.5 text-xs text-teal-700 font-semibold"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg><span>No black-box scoring — every factor explained</span></div>
+            </div>
+          </div>
+
+          <!-- Step 4 -->
+          <div class="flow-node pb-8">
+            <div class="flow-dot bg-teal-600 text-white shadow-md shadow-teal-600/30">4</div>
+            <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+              <div class="flex items-center gap-2 mb-2"><span class="text-lg">📊</span><h3 class="font-bold text-[#0b192c] text-base">Understand & Take Action</h3></div>
+              <p class="text-sm text-slate-600 leading-relaxed">Explore your cashflow, AI insights, potential financial options, and ways to improve your profile.</p>
+              <div class="mt-3 flex items-center gap-1.5 text-xs text-teal-700 font-semibold"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg><span>Personalized recommendations</span></div>
+            </div>
+          </div>
+
+          <!-- Step 5 — Reliability Score -->
+          <div class="flow-node pb-2">
+            <div class="flow-dot bg-emerald-600 text-white shadow-md shadow-emerald-600/30">5</div>
+            <div class="bg-[#0b192c] rounded-2xl p-5 border border-slate-700 shadow-lg text-white">
+              <div class="flex items-center gap-2 mb-3"><span class="text-lg">🏅</span><h3 class="font-bold text-base">Your Financial Identity</h3></div>
+              <p class="text-sm text-slate-300 leading-relaxed mb-4">Your reliability score — a portable, explainable financial identity that belongs to you.</p>
+              <!-- Score Display -->
+              <div class="bg-white/10 rounded-xl p-4 flex items-center justify-between">
+                <div>
+                  <span class="text-[10px] font-bold text-teal-300 uppercase tracking-wider">Reliability Score</span>
+                  <div class="flex items-baseline gap-1 mt-1"><span class="text-4xl font-extrabold text-white tracking-tight">81</span><span class="text-sm text-slate-400 font-bold">/ 100</span></div>
+                  <span class="inline-flex items-center gap-1 mt-2 px-2 py-0.5 bg-emerald-500/20 text-emerald-400 rounded-full text-[11px] font-bold"><svg class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>Strong Profile</span>
+                </div>
+                <!-- Mini Gauge -->
+                <div class="relative w-20 h-20 flex items-center justify-center">
+                  <svg class="w-20 h-20 transform -rotate-90" viewBox="0 0 36 36"><path class="text-white/10" stroke-width="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/><path class="text-teal-400" stroke-dasharray="81, 100" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/></svg>
+                  <div class="absolute inset-0 flex items-center justify-center text-teal-400"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg></div>
+                </div>
+              </div>
+              <!-- Mini Pillars -->
+              <div class="mt-3 grid grid-cols-5 gap-1.5">
+                <div class="text-center"><div class="h-1.5 rounded-full bg-teal-400 mb-1" style="width:82%"></div><span class="text-[9px] text-slate-400">Income</span></div>
+                <div class="text-center"><div class="h-1.5 rounded-full bg-teal-400 mb-1" style="width:91%"></div><span class="text-[9px] text-slate-400">Payment</span></div>
+                <div class="text-center"><div class="h-1.5 rounded-full bg-teal-400 mb-1" style="width:74%"></div><span class="text-[9px] text-slate-400">Savings</span></div>
+                <div class="text-center"><div class="h-1.5 rounded-full bg-teal-400 mb-1" style="width:78%"></div><span class="text-[9px] text-slate-400">Cashflow</span></div>
+                <div class="text-center"><div class="h-1.5 rounded-full bg-teal-400 mb-1" style="width:86%"></div><span class="text-[9px] text-slate-400">Business</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-6 pb-6 pt-2 border-t border-slate-100">
+        <button onclick="closeHowToUse(); showView('viewOnboarding','signup');" class="w-full bg-[#005f56] hover:bg-[#004e46] text-white font-bold py-3.5 px-6 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-teal-950/20 active:scale-[0.99] transition">
+          <span>Start Building Your Profile</span>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+        </button>
+        <p class="text-[11px] text-slate-400 text-center mt-3">Transparent assessment • Regulated lenders make final credit decisions</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- VIEW: LANDING PAGE                                           -->
+  <!-- ============================================================ -->
+  <div id="viewLanding" class="view-section active">
+    <!-- Landing Nav -->
+    <nav class="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/60">
+      <div class="max-w-6xl mx-auto px-5 py-3.5 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-[#0b192c] flex items-center justify-center shadow-md"><svg class="w-5 h-5 text-teal-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3" fill="#0d9488"></circle><circle cx="4" cy="6" r="2"></circle><circle cx="20" cy="6" r="2"></circle><circle cx="4" cy="18" r="2"></circle><circle cx="20" cy="18" r="2"></circle><path d="M6 7l4 3.5m4 0l4-3.5M6 17l4-3.5m4 0l4 3.5"></path></svg></div>
+          <span class="text-xl font-extrabold tracking-tight text-[#0b192c]">CreditMesh</span>
+        </div>
+        <div class="flex items-center gap-2 sm:gap-3">
+          <!-- Global Language Selector -->
+          <div class="relative">
+            <button id="navLangBtn" onclick="toggleLangNav()" class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 rounded-xl text-xs font-bold text-slate-700 border border-slate-200 transition">
+              <span>🌐</span>
+              <span id="navLangLabel">EN</span>
+              <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div id="navLangMenu" class="hidden absolute right-0 mt-2 w-36 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 z-50">
+              <button onclick="changeGlobalLang('English')" class="w-full text-left px-3.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-teal-50 hover:text-teal-700 transition">English</button>
+              <button onclick="changeGlobalLang('Kannada')" class="w-full text-left px-3.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-teal-50 hover:text-teal-700 transition">ಕನ್ನಡ (Kannada)</button>
+              <button onclick="changeGlobalLang('Hindi')" class="w-full text-left px-3.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-teal-50 hover:text-teal-700 transition">हिंदी (Hindi)</button>
+            </div>
+          </div>
+          <button onclick="openHowToUse()" class="text-sm font-semibold text-teal-700 hover:text-teal-800 transition flex items-center gap-1.5 px-3 py-2 rounded-lg hover:bg-teal-50"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7"/></svg><span class="hidden sm:inline">How to Use?</span></button>
+          <button onclick="showView('viewOnboarding','signup')" class="text-sm font-semibold text-teal-700 hover:text-teal-800 transition hidden sm:block">Sign Up</button>
+          <button onclick="showView('viewOnboarding','login')" class="text-sm font-bold text-white bg-[#0b192c] px-5 py-2.5 rounded-full hover:bg-slate-800 transition shadow-sm">Sign In</button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-br from-[#f8faff] via-white to-teal-50/30"></div>
+      <div class="absolute top-20 right-0 w-96 h-96 bg-teal-200/20 rounded-full blur-3xl"></div>
+      <div class="absolute bottom-0 left-0 w-80 h-80 bg-blue-200/15 rounded-full blur-3xl"></div>
+      <div class="relative max-w-6xl mx-auto px-5 pt-16 pb-20 sm:pt-24 sm:pb-28">
+        <div class="grid lg:grid-cols-2 gap-12 items-center">
+          <!-- Left: Copy -->
+          <div class="space-y-6">
+            <div class="fade-in-up"><span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-teal-50 border border-teal-200/60 text-xs font-bold text-teal-800"><span class="w-2 h-2 rounded-full bg-teal-600 animate-pulse"></span>Built for Street Vendors, Gig Workers & Micro-Enterprises</span></div>
+            <h1 class="text-4xl sm:text-5xl lg:text-[3.4rem] font-extrabold tracking-tight text-[#0b192c] leading-[1.15] fade-in-up fade-in-up-d1">No salary slip shouldn't mean<br/><span class="text-[#0d9488]">no financial identity.</span></h1>
+            <p class="text-base sm:text-lg text-slate-600 leading-relaxed max-w-lg fade-in-up fade-in-up-d2">CreditMesh helps gig workers, delivery partners, and micro-business owners build an explainable financial profile using consented financial activity — not outdated paperwork.</p>
+            <div class="flex flex-col sm:flex-row gap-3 fade-in-up fade-in-up-d3">
+              <button onclick="showView('viewOnboarding','signup')" class="bg-[#005f56] hover:bg-[#004e46] text-white font-bold py-4 px-8 rounded-2xl flex items-center justify-center gap-2.5 shadow-lg shadow-teal-950/20 active:scale-[0.99] transition text-base"><span>Build My Financial Profile</span><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg></button>
+              <button onclick="openHowToUse()" class="bg-white hover:bg-slate-50 text-[#0b192c] font-semibold py-4 px-8 rounded-2xl border border-slate-200 flex items-center justify-center gap-2.5 shadow-sm transition text-base"><svg class="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7"/></svg><span>How to Use?</span></button>
+            </div>
+            <div class="flex items-center gap-6 pt-2 fade-in-up fade-in-up-d4">
+              <div class="flex items-center gap-2">
+                <div class="flex -space-x-2"><div class="w-8 h-8 rounded-full bg-orange-100 border-2 border-white flex items-center justify-center text-xs font-bold text-orange-700">🛒</div><div class="w-8 h-8 rounded-full bg-violet-100 border-2 border-white flex items-center justify-center text-xs font-bold text-violet-700">🛵</div><div class="w-8 h-8 rounded-full bg-teal-100 border-2 border-white flex items-center justify-center text-xs font-bold text-teal-700">🏪</div></div>
+                <span class="text-sm font-semibold text-slate-700">Empowering micro-earners across India</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Specimen Card -->
+          <div class="hero-float">
+            <div class="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-2xl shadow-slate-200/50 space-y-5">
+              <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+                <div class="flex items-center gap-3">
+                  <div class="relative"><div class="w-12 h-12 rounded-full bg-slate-200 border-2 border-teal-500 overflow-hidden flex items-center justify-center text-slate-600 font-bold text-sm">RK</div><span class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-teal-500 text-white flex items-center justify-center text-[11px] font-bold">✓</span></div>
+                  <div><div class="flex items-center gap-2"><span class="font-bold text-slate-900">Ravi K.</span><span class="text-[10px] font-bold bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full border border-teal-200">Consented</span></div><p class="text-xs text-slate-500 font-medium">Delivery Partner • 180 Days Mesh</p></div>
+                </div>
+                <div class="w-9 h-9 rounded-full bg-slate-50 flex items-center justify-center text-slate-400"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg></div>
+              </div>
+              <div class="flex items-center justify-between">
+                <div><span class="text-[11px] font-bold text-slate-400 tracking-wider uppercase">Reliability Score</span><div class="flex items-baseline gap-1 mt-0.5"><span class="text-5xl font-extrabold text-[#0b192c] tracking-tight">81</span><span class="text-lg text-slate-400 font-bold">/ 100</span></div><div class="inline-flex items-center gap-1.5 mt-2 px-2.5 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-bold"><svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg><span>Strong Profile</span></div></div>
+                <div class="relative w-24 h-24 flex items-center justify-center"><svg class="w-24 h-24 transform -rotate-90" viewBox="0 0 36 36"><path class="text-slate-100" stroke-width="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" /><path class="text-teal-700" stroke-dasharray="81, 100" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" /></svg><div class="absolute inset-0 flex items-center justify-center text-teal-700"><svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg></div></div>
+              </div>
+              <div class="space-y-2.5">
+                <div><div class="flex justify-between text-xs mb-1 font-semibold"><span class="text-slate-700">Income Stability</span><span class="text-teal-700 font-bold">82%</span></div><div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden"><div class="bg-teal-700 h-full rounded-full" style="width:82%"></div></div></div>
+                <div><div class="flex justify-between text-xs mb-1 font-semibold"><span class="text-slate-700">Payment Reliability</span><span class="text-teal-700 font-bold">91%</span></div><div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden"><div class="bg-teal-700 h-full rounded-full" style="width:91%"></div></div></div>
+                <div><div class="flex justify-between text-xs mb-1 font-semibold"><span class="text-slate-700">Savings Discipline</span><span class="text-teal-700 font-bold">74%</span></div><div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden"><div class="bg-teal-700 h-full rounded-full" style="width:74%"></div></div></div>
+                <div><div class="flex justify-between text-xs mb-1 font-semibold"><span class="text-slate-700">Cashflow Stability</span><span class="text-teal-700 font-bold">78%</span></div><div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden"><div class="bg-teal-700 h-full rounded-full" style="width:78%"></div></div></div>
+                <div><div class="flex justify-between text-xs mb-1 font-semibold"><span class="text-slate-700">Business Consistency</span><span class="text-teal-700 font-bold">86%</span></div><div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden"><div class="bg-teal-700 h-full rounded-full" style="width:86%"></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Built For Section -->
+    <section class="bg-white border-y border-slate-200/60">
+      <div class="max-w-6xl mx-auto px-5 py-10">
+        <span class="text-xs font-bold text-slate-400 tracking-wider uppercase block mb-4 text-center">Built For</span>
+        <div class="flex flex-wrap justify-center gap-3">
+          <span class="px-5 py-2.5 bg-[#f8faff] rounded-xl border border-slate-200 text-sm font-bold text-slate-800 shadow-sm flex items-center gap-2">🛵 Gig & Delivery</span>
+          <span class="px-5 py-2.5 bg-[#f8faff] rounded-xl border border-slate-200 text-sm font-bold text-slate-800 shadow-sm flex items-center gap-2">🛒 Street Vendors</span>
+          <span class="px-5 py-2.5 bg-[#f8faff] rounded-xl border border-slate-200 text-sm font-bold text-slate-800 shadow-sm flex items-center gap-2">💻 Freelancers</span>
+          <span class="px-5 py-2.5 bg-[#f8faff] rounded-xl border border-slate-200 text-sm font-bold text-slate-800 shadow-sm flex items-center gap-2">🏪 Micro-Shops</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section id="howItWorks" class="py-16 sm:py-20">
+      <div class="max-w-6xl mx-auto px-5">
+        <div class="text-center space-y-2 mb-12"><span class="text-xs font-bold uppercase text-teal-700 tracking-wider">How CreditMesh Works</span><h2 class="text-3xl sm:text-4xl font-extrabold text-[#0b192c]">Three steps to sovereign<br class="hidden sm:block"/> financial dignity</h2></div>
+        <div class="grid md:grid-cols-3 gap-6">
+          <div class="bg-white p-7 rounded-2xl border border-slate-200 shadow-sm space-y-3 hover:shadow-lg transition"><div class="w-11 h-11 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center font-bold text-base">01</div><h3 class="text-lg font-bold text-[#0b192c]">Understand your financial behavior</h3><p class="text-sm text-slate-600 leading-relaxed">Get transparent clarity on your earning frequency, cashflow rhythms, and day-to-day discipline without confusing banking jargon.</p><div class="flex items-center gap-1.5 text-sm text-teal-700 font-semibold pt-1"><svg class="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg><span>Zero hidden scoring matrices</span></div></div>
+          <div class="bg-white p-7 rounded-2xl border border-slate-200 shadow-sm space-y-3 hover:shadow-lg transition"><div class="w-11 h-11 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center font-bold text-base">02</div><h3 class="text-lg font-bold text-[#0b192c]">Build a verified identity</h3><p class="text-sm text-slate-600 leading-relaxed">Transform daily digital earnings, micro-savings, and on-time supplier payments into a portable reliability score you own.</p><div class="flex items-center gap-1.5 text-sm text-teal-700 font-semibold pt-1"><svg class="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg><span>Portable across institutions</span></div></div>
+          <div class="bg-white p-7 rounded-2xl border border-slate-200 shadow-sm space-y-3 hover:shadow-lg transition"><div class="w-11 h-11 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center font-bold text-base">03</div><h3 class="text-lg font-bold text-[#0b192c]">Connect with regulated lenders</h3><p class="text-sm text-slate-600 leading-relaxed">Discover fair working capital, vehicle micro-loans, and insurance from regulated banks & MFIs that match your actual profile.</p><div class="flex items-center gap-1.5 text-sm text-teal-700 font-semibold pt-1"><svg class="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg><span>Direct regulated relationships</span></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Trust Section -->
+    <section class="bg-blue-50/50 border-y border-blue-100/60 py-16">
+      <div class="max-w-6xl mx-auto px-5">
+        <div class="text-center mb-10"><div class="inline-flex items-center gap-2 mb-3"><div class="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg></div><h3 class="font-extrabold text-[#0b192c] text-xl">Responsible Assessment Core</h3></div></div>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="bg-white p-5 rounded-xl border border-slate-200/80 shadow-sm space-y-2"><span class="text-teal-700 font-bold text-sm flex items-center gap-1.5">🔒 Privacy First</span><p class="text-xs text-slate-600 leading-relaxed">Explicit borrower consent before data processing. No secret background sharing.</p></div>
+          <div class="bg-white p-5 rounded-xl border border-slate-200/80 shadow-sm space-y-2"><span class="text-teal-700 font-bold text-sm flex items-center gap-1.5">💡 Explainable AI</span><p class="text-xs text-slate-600 leading-relaxed">No black-box rejections. Every factor is clearly explained in plain language.</p></div>
+          <div class="bg-white p-5 rounded-xl border border-slate-200/80 shadow-sm space-y-2"><span class="text-teal-700 font-bold text-sm flex items-center gap-1.5">🛡️ Consent Based</span><p class="text-xs text-slate-600 leading-relaxed">You can pause or revoke access to any connected stream at any time.</p></div>
+          <div class="bg-white p-5 rounded-xl border border-slate-200/80 shadow-sm space-y-2"><span class="text-teal-700 font-bold text-sm flex items-center gap-1.5">⚖️ No Hidden Bias</span><p class="text-xs text-slate-600 leading-relaxed">We never approve or decline loans directly; you remain in complete control.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bottom CTA Section -->
+    <section class="py-16 sm:py-20">
+      <div class="max-w-3xl mx-auto px-5">
+        <div class="bg-[#0b192c] text-white p-10 sm:p-14 rounded-3xl space-y-5 text-center shadow-2xl">
+          <div class="w-12 h-12 rounded-2xl bg-teal-500/20 text-teal-400 mx-auto flex items-center justify-center"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg></div>
+          <h3 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Ready to make your financial consistency visible?</h3>
+          <p class="text-sm text-slate-300 leading-relaxed max-w-md mx-auto">Organize your financial records, understand loan readiness, and explore micro-credit opportunities.</p>
+          <div class="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+            <button onclick="showView('viewOnboarding','signup')" class="bg-[#00875a] hover:bg-[#00744d] text-white font-bold py-4 px-8 rounded-2xl shadow-lg transition active:scale-[0.99] flex items-center justify-center gap-2 text-base"><span>Get Started Free</span><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></button>
+            <button onclick="showView('viewOnboarding','login')" class="bg-white/10 hover:bg-white/15 text-white font-semibold py-4 px-8 rounded-2xl border border-white/20 transition flex items-center justify-center gap-2 text-base"><span>Sign In</span></button>
+          </div>
+          <p class="text-xs text-slate-400">Transparent Assessment • Regulated Lenders Make Final Credit Decisions</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-200/60 bg-white">
+      <div class="max-w-6xl mx-auto px-5 py-10">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="flex items-center gap-2.5"><div class="w-8 h-8 rounded-lg bg-[#0b192c] flex items-center justify-center"><svg class="w-4 h-4 text-teal-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3" fill="#0d9488"></circle><circle cx="4" cy="6" r="2"></circle><circle cx="20" cy="6" r="2"></circle><circle cx="4" cy="18" r="2"></circle><circle cx="20" cy="18" r="2"></circle><path d="M6 7l4 3.5m4 0l4-3.5M6 17l4-3.5m4 0l4 3.5"></path></svg></div><span class="text-sm font-extrabold tracking-tight text-[#0b192c]">CreditMesh</span></div>
+          <p class="text-xs text-slate-400 text-center sm:text-right leading-relaxed max-w-lg">CreditMesh is an informational profile provider, not a direct lender. Regulated financial partners make independent credit decisions in accordance with applicable central banking guidelines.</p>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- VIEW: ONBOARDING FLOW                                        -->
+  <!-- ============================================================ -->
+  <div id="viewOnboarding" class="view-section">
+    <div class="flex justify-center min-h-screen py-0">
+      <main class="w-full max-w-[480px] bg-[#f8faff] text-[#0b192c] min-h-screen flex flex-col shadow-2xl relative overflow-hidden border-x border-slate-200">
+        <header class="px-5 pt-5 pb-3 flex items-center justify-between bg-[#f8faff]/90 backdrop-blur-md sticky top-0 z-30">
+          <button onclick="showView('viewLanding')" class="flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-slate-700 transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 12H5m7-7l-7 7 7 7"/></svg><span>Back</span></button>
+          <div class="flex items-center gap-1.5">
+            <span class="step-dot w-2 h-2 rounded-full bg-teal-600 transition-all duration-300"></span>
+            <span class="step-dot w-2 h-2 rounded-full bg-slate-300 transition-all duration-300"></span>
+            <span class="step-dot w-2 h-2 rounded-full bg-slate-300 transition-all duration-300"></span>
+            <span class="step-dot w-2 h-2 rounded-full bg-slate-300 transition-all duration-300"></span>
+            <span class="step-dot w-2 h-2 rounded-full bg-slate-300 transition-all duration-300"></span>
+            <span class="step-dot w-2 h-2 rounded-full bg-slate-300 transition-all duration-300"></span>
+          </div>
+        </header>
+
+        <div class="flex-1 px-5 pb-8 flex flex-col">
+
+          <!-- STEP 1 -->
+          <div id="step1" class="step-panel active flex-col gap-6 flex-1 animate-step">
+            <div class="mt-6"><div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200/60 text-xs font-semibold text-slate-700"><span class="w-2 h-2 rounded-full bg-teal-600 animate-pulse"></span><span id="step1Label">Step 1 of 6 — Verify your phone</span></div></div>
+            <div class="space-y-3"><h1 class="text-3xl font-extrabold tracking-tight text-[#0b192c] leading-[1.2]">Start with your<br/><span class="text-[#0d9488]">mobile number.</span></h1><p class="text-sm text-slate-600 leading-relaxed">We'll send a one-time verification code. Your number becomes the unique key to your CreditMesh profile — no passwords to remember.</p></div>
+            <div class="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-xl shadow-slate-200/60 space-y-4">
+              <label class="block"><span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Mobile Number</span><div class="mt-2 flex items-center gap-2"><div class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-bold text-slate-700 select-none"><span class="text-base">🇮🇳</span><span>+91</span></div><input id="phoneInput" type="tel" maxlength="10" placeholder="98765 43210" class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-[#0b192c] placeholder:text-slate-400 focus:outline-none focus:border-teal-500 focus:ring-[3px] focus:ring-teal-500/15 transition" /></div></label>
+              <div id="phoneError" class="hidden text-xs text-red-600 font-semibold flex items-center gap-1"><svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg><span>Please enter a valid 10-digit mobile number</span></div>
+            </div>
+            <button onclick="sendOTP()" class="w-full bg-[#005f56] hover:bg-[#004e46] text-white font-bold py-3.5 px-6 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-teal-950/20 active:scale-[0.99] transition mt-auto"><span>Send Verification Code</span><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg></button>
+            <p class="text-[11px] text-slate-400 text-center leading-relaxed">By continuing, you agree to CreditMesh's <span class="text-teal-700 font-semibold">Terms of Service</span> and <span class="text-teal-700 font-semibold">Privacy Policy</span>.</p>
+          </div>
+
+          <!-- STEP 2 -->
+          <div id="step2" class="step-panel flex-col gap-6 flex-1">
+            <div class="mt-6"><div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200/60 text-xs font-semibold text-slate-700"><span class="w-2 h-2 rounded-full bg-teal-600 animate-pulse"></span><span>Step 2 of 6 — Enter OTP</span></div></div>
+            <div class="space-y-3"><h1 class="text-3xl font-extrabold tracking-tight text-[#0b192c] leading-[1.2]">Check your<br/><span class="text-[#0d9488]">messages.</span></h1><p class="text-sm text-slate-600 leading-relaxed">We sent a 6-digit code to <span id="maskedPhone" class="font-bold text-[#0b192c]">+91 98XXX XXX10</span>. It expires in <span id="otpTimer" class="font-bold text-teal-700">02:00</span>.</p></div>
+            <div class="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-xl shadow-slate-200/60 space-y-5">
+              <div class="flex justify-center gap-2.5">
+                <input type="text" maxlength="1" class="otp-input w-11 h-14 text-center text-xl font-extrabold text-[#0b192c] bg-slate-50 border-2 border-slate-200 rounded-xl focus:outline-none transition" oninput="otpMove(this,1)" />
+                <input type="text" maxlength="1" class="otp-input w-11 h-14 text-center text-xl font-extrabold text-[#0b192c] bg-slate-50 border-2 border-slate-200 rounded-xl focus:outline-none transition" oninput="otpMove(this,2)" />
+                <input type="text" maxlength="1" class="otp-input w-11 h-14 text-center text-xl font-extrabold text-[#0b192c] bg-slate-50 border-2 border-slate-200 rounded-xl focus:outline-none transition" oninput="otpMove(this,3)" />
+                <input type="text" maxlength="1" class="otp-input w-11 h-14 text-center text-xl font-extrabold text-[#0b192c] bg-slate-50 border-2 border-slate-200 rounded-xl focus:outline-none transition" oninput="otpMove(this,4)" />
+                <input type="text" maxlength="1" class="otp-input w-11 h-14 text-center text-xl font-extrabold text-[#0b192c] bg-slate-50 border-2 border-slate-200 rounded-xl focus:outline-none transition" oninput="otpMove(this,5)" />
+                <input type="text" maxlength="1" class="otp-input w-11 h-14 text-center text-xl font-extrabold text-[#0b192c] bg-slate-50 border-2 border-slate-200 rounded-xl focus:outline-none transition" oninput="otpMove(this,6)" />
+              </div>
+              <div class="text-center"><button id="resendBtn" class="text-xs font-semibold text-teal-700 hover:text-teal-800 transition disabled:text-slate-400 disabled:cursor-not-allowed" disabled>Resend Code</button></div>
+            </div>
+            <button onclick="verifyOTP()" class="w-full bg-[#005f56] hover:bg-[#004e46] text-white font-bold py-3.5 px-6 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-teal-950/20 active:scale-[0.99] transition mt-auto"><span>Verify & Continue</span><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg></button>
+            <button onclick="goToStep(1)" class="w-full text-sm font-semibold text-slate-500 hover:text-slate-700 transition flex items-center justify-center gap-1.5"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 12H5m7-7l-7 7 7 7"/></svg><span>Back to phone entry</span></button>
+          </div>
+
+          <!-- STEP 3 -->
+          <div id="step3" class="step-panel flex-col gap-5 flex-1">
+            <div class="mt-6"><div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200/60 text-xs font-semibold text-slate-700"><span class="w-2 h-2 rounded-full bg-teal-600 animate-pulse"></span><span>Step 3 of 6 — Select your profile</span></div></div>
+            <div class="space-y-3"><h1 class="text-3xl font-extrabold tracking-tight text-[#0b192c] leading-[1.2]">What best describes<br/><span class="text-[#0d9488]">your work?</span></h1><p class="text-sm text-slate-600 leading-relaxed">This helps us customize your reliability pillars and connect you with the right financial partners.</p></div>
+            <div class="space-y-3" id="profileCards">
+              <div class="profile-card bg-white p-4 rounded-2xl border-2 border-slate-200 cursor-pointer flex items-center gap-4" onclick="selectProfile(this,'gig')"><div class="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-2xl flex-shrink-0">🛵</div><div class="flex-1"><h3 class="font-bold text-sm text-[#0b192c]">Gig & Delivery Partner</h3><p class="text-xs text-slate-500 mt-0.5">Zomato, Swiggy, Amazon, Uber</p></div><div class="w-5 h-5 rounded-full border-2 border-slate-300 flex items-center justify-center flex-shrink-0 check-circle"></div></div>
+              <div class="profile-card bg-white p-4 rounded-2xl border-2 border-slate-200 cursor-pointer flex items-center gap-4" onclick="selectProfile(this,'vendor')"><div class="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-2xl flex-shrink-0">🛒</div><div class="flex-1"><h3 class="font-bold text-sm text-[#0b192c]">Street Vendor / Kirana</h3><p class="text-xs text-slate-500 mt-0.5">Daily earners, cash & UPI flows</p></div><div class="w-5 h-5 rounded-full border-2 border-slate-300 flex items-center justify-center flex-shrink-0 check-circle"></div></div>
+              <div class="profile-card bg-white p-4 rounded-2xl border-2 border-slate-200 cursor-pointer flex items-center gap-4" onclick="selectProfile(this,'freelancer')"><div class="w-12 h-12 rounded-xl bg-violet-50 flex items-center justify-center text-2xl flex-shrink-0">💻</div><div class="flex-1"><h3 class="font-bold text-sm text-[#0b192c]">Freelancer / Consultant</h3><p class="text-xs text-slate-500 mt-0.5">Project-based, invoices, int'l clients</p></div><div class="w-5 h-5 rounded-full border-2 border-slate-300 flex items-center justify-center flex-shrink-0 check-circle"></div></div>
+              <div class="profile-card bg-white p-4 rounded-2xl border-2 border-slate-200 cursor-pointer flex items-center gap-4" onclick="selectProfile(this,'microshop')"><div class="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-2xl flex-shrink-0">🏪</div><div class="flex-1"><h3 class="font-bold text-sm text-[#0b192c]">Micro-Shop / Small Business</h3><p class="text-xs text-slate-500 mt-0.5">Monthly turnover, supplier payments</p></div><div class="w-5 h-5 rounded-full border-2 border-slate-300 flex items-center justify-center flex-shrink-0 check-circle"></div></div>
+            </div>
+            <button id="step3Next" onclick="goToStep(4)" class="w-full bg-[#005f56] hover:bg-[#004e46] text-white font-bold py-3.5 px-6 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-teal-950/20 active:scale-[0.99] transition mt-auto opacity-50 pointer-events-none"><span>Continue with Selected Profile</span><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg></button>
+          </div>
+
+          <!-- STEP 4 -->
+          <div id="step4" class="step-panel flex-col gap-5 flex-1">
+            <div class="mt-6"><div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200/60 text-xs font-semibold text-slate-700"><span class="w-2 h-2 rounded-full bg-teal-600 animate-pulse"></span><span>Step 4 of 6 — Registration & Baseline</span></div></div>
+            <div class="space-y-2">
+              <h1 class="text-3xl font-extrabold tracking-tight text-[#0b192c] leading-[1.2]">Enter your<br/><span class="text-[#0d9488]">business details.</span></h1>
+              <p class="text-xs text-slate-600 leading-relaxed">Provide your earner category and approximate cashflow numbers to initialize your financial readiness baseline.</p>
+            </div>
+            <div class="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-xl shadow-slate-200/60 space-y-3.5">
+              <label class="block">
+                <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Full Name <span class="text-teal-600">*</span></span>
+                <input id="userNameInput" type="text" placeholder="e.g. Ramesh Kumar" class="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-[#0b192c] placeholder:text-slate-400 focus:outline-none focus:border-teal-500 focus:ring-[3px] focus:ring-teal-500/15 transition" />
+              </label>
+
+              <label class="block">
+                <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Business / Work Category <span class="text-teal-600">*</span></span>
+                <select id="userBusinessTypeInput" class="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-[#0b192c] focus:outline-none focus:border-teal-500 focus:ring-[3px] focus:ring-teal-500/15 transition">
+                  <option value="Street Vendor / Flower & Fresh Produce Stall">Street Vendor / Fresh Produce Stall</option>
+                  <option value="Gig & Delivery Partner (Zomato, Swiggy, Uber)">Gig & Delivery Partner</option>
+                  <option value="Kirana / Small Retail Store">Kirana / Small Retail Store</option>
+                  <option value="Freelancer / Consultant">Freelancer / Consultant</option>
+                  <option value="Artisan / Tradesperson / Small Workshop">Artisan / Tradesperson / Workshop</option>
+                </select>
+              </label>
+
+              <div class="grid grid-cols-2 gap-3">
+                <label class="block">
+                  <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Approx. Monthly Income <span class="text-teal-600">*</span></span>
+                  <div class="relative mt-1">
+                    <span class="absolute left-3 top-2.5 text-xs font-bold text-slate-400">₹</span>
+                    <input id="userIncomeInput" type="number" min="1000" step="500" placeholder="32000" class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-7 pr-3 py-2.5 text-sm font-semibold text-[#0b192c] placeholder:text-slate-400 focus:outline-none focus:border-teal-500 focus:ring-[3px] focus:ring-teal-500/15 transition" />
+                  </div>
+                </label>
+                <label class="block">
+                  <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Approx. Expenses <span class="text-teal-600">*</span></span>
+                  <div class="relative mt-1">
+                    <span class="absolute left-3 top-2.5 text-xs font-bold text-slate-400">₹</span>
+                    <input id="userExpenseInput" type="number" min="0" step="500" placeholder="18000" class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-7 pr-3 py-2.5 text-sm font-semibold text-[#0b192c] placeholder:text-slate-400 focus:outline-none focus:border-teal-500 focus:ring-[3px] focus:ring-teal-500/15 transition" />
+                  </div>
+                </label>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <label class="block">
+                  <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">City / Market</span>
+                  <input id="userCityInput" type="text" placeholder="KR Market, Bangalore" class="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-[#0b192c] placeholder:text-slate-400 focus:outline-none focus:border-teal-500 focus:ring-[3px] focus:ring-teal-500/15 transition" />
+                </label>
+                <label class="block">
+                  <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Email (Optional)</span>
+                  <input id="userEmailInput" type="email" placeholder="vendor@example.com" class="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-[#0b192c] placeholder:text-slate-400 focus:outline-none focus:border-teal-500 focus:ring-[3px] focus:ring-teal-500/15 transition" />
+                </label>
+              </div>
+
+              <div id="detailsError" class="hidden text-xs text-red-600 font-semibold flex items-center gap-1.5 p-2 rounded-lg bg-red-50 border border-red-200">
+                <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                <span id="detailsErrorMsg">Please enter your full name and valid income/expense numbers</span>
+              </div>
+            </div>
+            <button onclick="saveDetailsAndProceed()" class="w-full bg-[#005f56] hover:bg-[#004e46] text-white font-bold py-3.5 px-6 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-teal-950/20 active:scale-[0.99] transition mt-auto"><span>Save & Continue</span><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg></button>
+            <button onclick="goToStep(3)" class="w-full text-sm font-semibold text-slate-500 hover:text-slate-700 transition flex items-center justify-center gap-1.5"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 12H5m7-7l-7 7 7 7"/></svg><span>Back to profile type</span></button>
+          </div>
+
+          <!-- STEP 5 -->
+          <div id="step5" class="step-panel flex-col gap-5 flex-1">
+            <div class="mt-6"><div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200/60 text-xs font-semibold text-slate-700"><span class="w-2 h-2 rounded-full bg-teal-600 animate-pulse"></span><span>Step 5 of 6 — Explicit Consent</span></div></div>
+            <div class="space-y-2">
+              <h1 class="text-3xl font-extrabold tracking-tight text-[#0b192c] leading-[1.2]">Your data,<br/><span class="text-[#0d9488]">your consent.</span></h1>
+              <p class="text-xs text-slate-600 leading-relaxed">CreditMesh operates on explicit borrower consent. You choose what signals are analyzed to establish your readiness score.</p>
+            </div>
+
+            <!-- Security Commitment Box -->
+            <div class="bg-emerald-50/70 border border-emerald-200 rounded-2xl p-3.5 space-y-1.5 text-xs text-emerald-900">
+              <div class="flex items-center gap-2 font-bold text-emerald-800">
+                <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                <span>Zero Secret Guarantee</span>
+              </div>
+              <p class="text-[11px] text-emerald-700 leading-relaxed">CreditMesh will <strong>NEVER</strong> ask for your UPI PIN, ATM PIN, net-banking passwords, or SMS OTPs. Only declared and authorized record summaries are processed.</p>
+            </div>
+
+            <!-- Consent Permissions -->
+            <div class="space-y-2.5">
+              <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-xl bg-teal-50 flex items-center justify-center text-base">📊</div>
+                  <div>
+                    <h3 class="font-bold text-xs text-[#0b192c]">Financial Readiness Engine</h3>
+                    <p class="text-[11px] text-slate-500">Calculate monthly surplus & stability score</p>
+                  </div>
+                </div>
+                <div class="consent-toggle on w-11 h-6 rounded-full bg-teal-600 flex items-center px-0.5 cursor-pointer" onclick="toggleConsent(this)"><div class="toggle-knob w-5 h-5 rounded-full bg-white shadow-sm" style="transform:translateX(18px)"></div></div>
+              </div>
+
+              <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-xl bg-violet-50 flex items-center justify-center text-base">🧾</div>
+                  <div>
+                    <h3 class="font-bold text-xs text-[#0b192c]">Supplier & Invoice Records</h3>
+                    <p class="text-[11px] text-slate-500">Track on-time repayments & cashflow health</p>
+                  </div>
+                </div>
+                <div class="consent-toggle on w-11 h-6 rounded-full bg-teal-600 flex items-center px-0.5 cursor-pointer" onclick="toggleConsent(this)"><div class="toggle-knob w-5 h-5 rounded-full bg-white shadow-sm" style="transform:translateX(18px)"></div></div>
+              </div>
+
+              <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center text-base">🏦</div>
+                  <div>
+                    <h3 class="font-bold text-xs text-[#0b192c]">Authorized Institution Discovery</h3>
+                    <p class="text-[11px] text-slate-500">Allow banks to verify readiness dossier with consent token</p>
+                  </div>
+                </div>
+                <div class="consent-toggle on w-11 h-6 rounded-full bg-teal-600 flex items-center px-0.5 cursor-pointer" onclick="toggleConsent(this)"><div class="toggle-knob w-5 h-5 rounded-full bg-white shadow-sm" style="transform:translateX(18px)"></div></div>
+              </div>
+            </div>
+
+            <!-- Explicit Consent Checkbox -->
+            <label class="flex items-start gap-2.5 pt-1 cursor-pointer">
+              <input id="consentCheckbox" type="checkbox" checked class="mt-0.5 w-4 h-4 rounded text-teal-600 focus:ring-teal-500 border-slate-300" />
+              <span class="text-xs text-slate-600 leading-snug">I grant consent to process my financial details for readiness calculation. I understand that banks make independent credit decisions.</span>
+            </label>
+
+            <button onclick="saveConsentAndFinish()" class="w-full bg-[#005f56] hover:bg-[#004e46] text-white font-bold py-3.5 px-6 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-teal-950/20 active:scale-[0.99] transition mt-auto"><span>Complete Registration</span><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg></button>
+          </div>
+
+          <!-- STEP 6 -->
+          <div id="step6" class="step-panel flex-col gap-5 flex-1 items-center justify-center text-center">
+             <div class="mt-6"><div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/60 text-xs font-semibold text-emerald-700"><span class="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span><span>Step 6 of 6 — Complete</span></div></div>
+             <div class="flex-1 flex flex-col items-center justify-center gap-4">
+                <div class="relative w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mb-2">
+                  <div class="pulse-ring absolute inset-0 rounded-full border-2 border-emerald-400"></div>
+                  <svg class="w-10 h-10 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path class="check-draw" stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                </div>
+                <h1 class="text-3xl font-extrabold tracking-tight text-[#0b192c] leading-[1.2]">You're all set,<br/><span class="text-[#0d9488]" id="registeredNameDisplay">there!</span></h1>
+                <p class="text-sm text-slate-600 leading-relaxed max-w-xs">Your financial profile is being generated. This usually takes a few moments.</p>
+             </div>
+             <button onclick="window.location.href='dfinancial_dashboard.html'" class="w-full bg-[#005f56] hover:bg-[#004e46] text-white font-bold py-3.5 px-6 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-teal-950/20 active:scale-[0.99] transition mt-auto"><span>Go to My Profile</span><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg></button>
+          </div>
+
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="fixed top-6 left-1/2 z-[110] bg-[#0b192c] text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 text-sm font-semibold transition-all duration-300 opacity-0 pointer-events-none max-w-[380px]" style="transform:translateX(-50%) translateY(-16px)">
+    <svg class="w-5 h-5 text-teal-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    <span id="toastText">Success!</span>
+  </div>
+
+  <script>
+    // --- View Switching ---
+    function showView(viewId, step) {
+      document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+      const targetView = document.getElementById(viewId);
+      if (targetView) targetView.classList.add('active');
+      if (viewId === 'viewOnboarding' && step) {
+        goToStep(1);
+      }
+      window.scrollTo(0, 0);
+    }
+
+    // --- How to Use Modal ---
+    function openHowToUse() {
+      document.getElementById('howToUseModal').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeHowToUse() {
+      document.getElementById('howToUseModal').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    // --- Onboarding Step Logic ---
+    let currentStep = 1;
+    function goToStep(step) {
+      currentStep = step;
+      document.querySelectorAll('.step-panel').forEach(el => {
+        el.classList.remove('active', 'animate-step');
+      });
+      const targetStep = document.getElementById(`step${step}`);
+      if (targetStep) {
+        targetStep.classList.add('active');
+        setTimeout(() => targetStep.classList.add('animate-step'), 10);
+      }
+      document.querySelectorAll('.step-dot').forEach((dot, index) => {
+        if (index < step) {
+          dot.classList.remove('bg-slate-300');
+          dot.classList.add('bg-teal-600');
+        } else {
+          dot.classList.remove('bg-teal-600');
+          dot.classList.add('bg-slate-300');
+        }
+      });
+    }
+
+    // --- Step 1: Phone ---
+    function sendOTP() {
+      const phone = document.getElementById('phoneInput').value;
+      if (phone.length === 10) {
+        document.getElementById('phoneError').classList.add('hidden');
+        document.getElementById('maskedPhone').innerText = `+91 ${phone.slice(0,2)}XXX XXX${phone.slice(-2)}`;
+        localStorage.setItem('user_phone', phone);
+        localStorage.setItem('user_id', '101');
+        goToStep(2);
+        startOtpTimer();
+      } else {
+        document.getElementById('phoneError').classList.remove('hidden');
+      }
+    }
+
+    // --- Step 2: OTP ---
+    let otpInterval;
+    function startOtpTimer() {
+      let seconds = 120;
+      const timerEl = document.getElementById('otpTimer');
+      const resendBtn = document.getElementById('resendBtn');
+      resendBtn.disabled = true;
+      clearInterval(otpInterval);
+      otpInterval = setInterval(() => {
+        seconds--;
+        const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+        const s = (seconds % 60).toString().padStart(2, '0');
+        timerEl.textContent = `${m}:${s}`;
+        if (seconds <= 0) {
+          clearInterval(otpInterval);
+          resendBtn.disabled = false;
+        }
+      }, 1000);
+    }
+    function verifyOTP() {
+      // Simulating verification success
+      localStorage.setItem('user_id', '101');
+      showToast('Phone verified successfully!');
+      goToStep(3);
+    }
+    function otpMove(ref, index) {
+      const inputs = document.querySelectorAll('.otp-input');
+      if (ref.value.length === 1 && index < 6) {
+        inputs[index].focus();
+      }
+    }
+
+    // --- Step 3: Profile Selection ---
+    let selectedProfile = '';
+    function selectProfile(element, type) {
+      document.querySelectorAll('.profile-card').forEach(card => card.classList.remove('selected'));
+      element.classList.add('selected');
+      selectedProfile = type;
+      localStorage.setItem('user_profile_type', type);
+      const nextBtn = document.getElementById('step3Next');
+      nextBtn.classList.remove('opacity-50', 'pointer-events-none');
+
+      // Auto-select corresponding option in Step 4
+      const bTypeInput = document.getElementById('userBusinessTypeInput');
+      if (bTypeInput) {
+        if (type === 'gig') bTypeInput.value = 'Gig & Delivery Partner (Zomato, Swiggy, Uber)';
+        else if (type === 'vendor') bTypeInput.value = 'Street Vendor / Flower & Fresh Produce Stall';
+        else if (type === 'microshop') bTypeInput.value = 'Kirana / Small Retail Store';
+        else if (type === 'freelancer') bTypeInput.value = 'Freelancer / Consultant';
+      }
+    }
+
+    // --- Step 4: Personal Details Submission ---
+    async function saveDetailsAndProceed() {
+      const nameInput = document.getElementById('userNameInput');
+      const bTypeInput = document.getElementById('userBusinessTypeInput');
+      const incomeInput = document.getElementById('userIncomeInput');
+      const expenseInput = document.getElementById('userExpenseInput');
+      const cityInput = document.getElementById('userCityInput');
+      const emailInput = document.getElementById('userEmailInput');
+      const errorEl = document.getElementById('detailsError');
+      const errorMsg = document.getElementById('detailsErrorMsg');
+
+      const name = nameInput ? nameInput.value.trim() : '';
+      const businessType = bTypeInput ? bTypeInput.value : 'Street Vendor / Small Business';
+      const incomeStr = incomeInput ? incomeInput.value.trim() : '';
+      const expenseStr = expenseInput ? expenseInput.value.trim() : '';
+      const city = cityInput ? cityInput.value.trim() : '';
+      const email = emailInput ? emailInput.value.trim() : '';
+
+      // Validation
+      if (!name) {
+        if (errorEl) {
+          if (errorMsg) errorMsg.textContent = 'Please enter your full name.';
+          errorEl.classList.remove('hidden');
+        }
+        if (nameInput) nameInput.focus();
+        return;
+      }
+
+      const income = parseFloat(incomeStr);
+      if (isNaN(income) || income <= 0) {
+        if (errorEl) {
+          if (errorMsg) errorMsg.textContent = 'Please enter a valid approximate monthly income (greater than 0).';
+          errorEl.classList.remove('hidden');
+        }
+        if (incomeInput) incomeInput.focus();
+        return;
+      }
+
+      const expense = parseFloat(expenseStr);
+      if (isNaN(expense) || expense < 0) {
+        if (errorEl) {
+          if (errorMsg) errorMsg.textContent = 'Please enter valid monthly expenses (0 or greater).';
+          errorEl.classList.remove('hidden');
+        }
+        if (expenseInput) expenseInput.focus();
+        return;
+      }
+
+      if (errorEl) errorEl.classList.add('hidden');
+
+      // 1. Store locally immediately
+      localStorage.setItem('user_name', name);
+      localStorage.setItem('user_occupation', businessType);
+      localStorage.setItem('user_business_type', businessType);
+      localStorage.setItem('approx_monthly_income', income);
+      localStorage.setItem('approx_monthly_expenses', expense);
+      if (email) localStorage.setItem('user_email', email);
+      if (city) localStorage.setItem('user_city', city);
+
+      // 2. Update completion screen name display
+      const displayNameEl = document.getElementById('registeredNameDisplay');
+      if (displayNameEl) {
+        const firstName = name.split(' ')[0] || name;
+        displayNameEl.innerText = `${firstName}!`;
+      }
+
+      // 3. Register with backend API
+      const phone = localStorage.getItem('user_phone') || '9876543210';
+      try {
+        if (typeof apiRequest === 'function') {
+          const res = await apiRequest('/register', 'POST', {
+            name: name,
+            phone: phone,
+            email: email || `${name.toLowerCase().replace(/\s+/g, '.')}@example.com`,
+            location: city || 'Bangalore, Karnataka',
+            profile_type: selectedProfile || 'vendor',
+            business_type: businessType,
+            approx_monthly_income: income,
+            approx_monthly_expenses: expense,
+            consent_data_sharing: true
+          });
+          if (res && res.user_id) {
+            localStorage.setItem('user_id', String(res.user_id));
+          }
+        }
+      } catch (e) {
+        console.warn('Backend sync deferred:', e);
+      }
+
+      showToast(`Welcome, ${name}!`);
+      goToStep(5);
+    }
+
+    // --- Step 5: Explicit Consent & Finish ---
+    function toggleConsent(el) {
+      el.classList.toggle('on');
+      const knob = el.querySelector('.toggle-knob');
+      if (knob) {
+        knob.style.transform = el.classList.contains('on') ? 'translateX(18px)' : 'translateX(0px)';
+      }
+    }
+
+    function saveConsentAndFinish() {
+      const consentBox = document.getElementById('consentCheckbox');
+      if (consentBox && !consentBox.checked) {
+        showToast('Please check the consent checkbox to generate your readiness profile.');
+        return;
+      }
+      localStorage.setItem('user_consent_recorded', 'true');
+      localStorage.setItem('user_consent_date', new Date().toISOString().split('T')[0]);
+      localStorage.setItem('user_consent_token', 'CM-CONSENT-8842');
+      showToast('Consent recorded securely');
+      goToStep(6);
+    }
+
+    // --- Toast Notification ---
+    let toastTimer = null;
+    function showToast(text) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toastText').textContent = text;
+      toast.style.opacity = '1'; toast.style.transform = 'translateX(-50%) translateY(0)'; toast.style.pointerEvents = 'auto';
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateX(-50%) translateY(-16px)'; toast.style.pointerEvents = 'none'; }, 2800);
+    }
+
+    // Close modals on escape
+    document.addEventListener('keydown', e => { 
+      if (e.key === 'Escape') {
+        closeHowToUse();
+      }
+    });
+  </script>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+</body>
+</html>

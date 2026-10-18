@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CreditMesh — Financial Options</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'] },
+          colors: { brand: { navy: '#0b192c', teal: '#0d9488', emerald: '#00875a' } }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; -webkit-font-smoothing: antialiased; background-color: #f1f5f9; }
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .nav-link { position: relative; }
+    .nav-link.active::after { content:''; position:absolute; bottom:-2px; left:0; right:0; height:2.5px; background:#0d9488; border-radius:2px; }
+    .nav-link:hover::after { content:''; position:absolute; bottom:-2px; left:0; right:0; height:2px; background:rgba(13,148,136,0.25); border-radius:2px; }
+    .nav-link.active:hover::after { background:#0d9488; }
+    .card-hover { transition: box-shadow 0.2s ease, transform 0.2s ease; }
+    .card-hover:hover { box-shadow: 0 8px 30px rgba(0,0,0,0.08); transform: translateY(-1px); }
+    .cat-btn { transition: all 0.2s ease; }
+    .cat-btn.active { background: #0d9488; color: white; border-color: #0d9488; }
+    .modal-overlay { opacity:0; pointer-events:none; transition: opacity 0.3s ease; }
+    .modal-overlay.open { opacity:1; pointer-events:auto; }
+    .modal-content { transform: translateY(30px) scale(0.97); transition: transform 0.35s cubic-bezier(0.22,1,0.36,1); }
+    .modal-overlay.open .modal-content { transform: translateY(0) scale(1); }
+    @keyframes checkSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .check-spin { animation: checkSpin 0.8s linear infinite; }
+    .form-input { width:100%; background:#f8fafc; border:1px solid #e2e8f0; border-radius:0.75rem; padding:0.625rem 0.75rem; font-size:0.8125rem; font-weight:600; color:#0b192c; outline:none; transition: border-color 0.15s, box-shadow 0.15s; }
+    .form-input:focus { border-color:#0d9488; box-shadow: 0 0 0 3px rgba(13,148,136,0.12); }
+    .form-input::placeholder { color:#94a3b8; font-weight:500; }
+    select.form-input { appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 0.75rem center; padding-right:2rem; }
+    textarea.form-input { resize:vertical; min-height:60px; }
+    .plan-card { transition: all 0.25s ease; }
+    .plan-card:hover { box-shadow: 0 12px 40px rgba(0,0,0,0.1); transform: translateY(-2px); }
+    .plan-card.selected { border-color: #0d9488; box-shadow: 0 0 0 3px rgba(13,148,136,0.15), 0 8px 30px rgba(0,0,0,0.08); }
+    @keyframes fadeInUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+    .fade-in-up { animation: fadeInUp 0.4s ease forwards; }
+    .fade-in-up-delay-1 { animation-delay: 0.08s; opacity:0; }
+    .fade-in-up-delay-2 { animation-delay: 0.16s; opacity:0; }
+    .fade-in-up-delay-3 { animation-delay: 0.24s; opacity:0; }
+    .fade-in-up-delay-4 { animation-delay: 0.32s; opacity:0; }
+  </style>
+</head>
+<body class="min-h-screen">
+
+  <!-- DESKTOP NAV -->
+  <nav class="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 hidden lg:block">
+    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-8">
+        <a href="dfinancial_dashboard.html" class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-[#0b192c] flex items-center justify-center shadow-md"><svg class="w-5 h-5 text-teal-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3" fill="#0d9488"></circle><circle cx="4" cy="6" r="2"></circle><circle cx="20" cy="6" r="2"></circle><circle cx="4" cy="18" r="2"></circle><circle cx="20" cy="18" r="2"></circle><path d="M6 7l4 3.5m4 0l4-3.5M6 17l4-3.5m4 0l4 3.5"></path></svg></div>
+          <span class="text-lg font-extrabold tracking-tight text-[#0b192c]">CreditMesh</span>
+        </a>
+        <div class="flex items-center gap-1">
+          <a href="dfinancial_dashboard.html" data-i18n="nav_profile" class="nav-link px-4 py-2 text-sm font-semibold text-slate-500 hover:text-slate-700 rounded-lg transition">Financial Profile</a>
+          <a href="efinances.html" data-i18n="nav_finances" class="nav-link px-4 py-2 text-sm font-semibold text-slate-500 hover:text-slate-700 rounded-lg transition">Finances</a>
+          <a href="cmybusiness.html" data-i18n="nav_business" class="nav-link px-4 py-2 text-sm font-semibold text-slate-500 hover:text-slate-700 rounded-lg transition">Business</a>
+          <a href="financial_options.html" data-i18n="nav_options" class="nav-link active px-4 py-2 text-sm font-bold text-[#0b192c] rounded-lg">Financial Options</a>
+          <a href="help.html" data-i18n="nav_help" class="nav-link px-4 py-2 text-sm font-semibold text-slate-500 hover:text-slate-700 rounded-lg transition">Help</a>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <!-- Global Language Selector -->
+        <div class="relative">
+          <button id="navLangBtn" onclick="toggleLangNav()" class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 rounded-xl text-xs font-bold text-slate-700 border border-slate-200 transition">
+            <span>🌐</span>
+            <span id="navLangLabel">EN</span>
+            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+          </button>
+          <div id="navLangMenu" class="hidden absolute right-0 mt-2 w-36 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 z-50">
+            <button onclick="changeGlobalLang('English')" class="w-full text-left px-3.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-teal-50 hover:text-teal-700 transition">English</button>
+            <button onclick="changeGlobalLang('Kannada')" class="w-full text-left px-3.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-teal-50 hover:text-teal-700 transition">ಕನ್ನಡ (Kannada)</button>
+            <button onclick="changeGlobalLang('Hindi')" class="w-full text-left px-3.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-teal-50 hover:text-teal-700 transition">हिंदी (Hindi)</button>
+          </div>
+        </div>
+        <button onclick="showToast('No new notifications')" class="w-9 h-9 rounded-full bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-700 transition relative"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg><span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-teal-500"></span></button>
+        <a href="bprofile.html" class="flex items-center gap-2.5" style="padding-left:12px;border-left:1px solid #e2e8f0"><div class="w-9 h-9 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-bold text-sm user-avatar-text">RK</div><span class="text-sm font-semibold text-[#0b192c] user-name-text">Ravi Kumar</span></a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- MOBILE NAV -->
+  <nav class="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 lg:hidden">
+    <div class="px-4 h-14 flex items-center justify-between">
+      <div class="flex items-center gap-2"><div class="w-8 h-8 rounded-lg bg-[#0b192c] flex items-center justify-center shadow-sm"><svg class="w-4 h-4 text-teal-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3" fill="#0d9488"></circle><circle cx="4" cy="6" r="2"></circle><circle cx="20" cy="6" r="2"></circle><circle cx="4" cy="18" r="2"></circle><circle cx="20" cy="18" r="2"></circle><path d="M6 7l4 3.5m4 0l4-3.5M6 17l4-3.5m4 0l4 3.5"></path></svg></div><span class="text-base font-extrabold tracking-tight text-[#0b192c]">CreditMesh</span></div>
+      <div class="flex items-center gap-3"><button onclick="showToast('No new notifications')" class="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-500"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg></button><a href="bprofile.html" class="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-bold text-xs">RK</a></div>
+    </div>
+  </nav>
+
+  <!-- MOBILE BOTTOM TABS -->
+  <nav class="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-t border-slate-200/60 lg:hidden">
+    <div class="flex items-center justify-around py-2">
+      <a href="dfinancial_dashboard.html" class="flex flex-col items-center gap-0.5 px-3 py-1 text-slate-400"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 8a6 6 0 016 0c0 4-6 8-6 8s-6-4-6-8a6 6 0 0112 0z"/></svg><span class="text-[10px] font-semibold">Profile</span></a>
+      <a href="efinances.html" class="flex flex-col items-center gap-0.5 px-3 py-1 text-slate-400"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span class="text-[10px] font-semibold">Finances</span></a>
+      <a href="cmybusiness.html" class="flex flex-col items-center gap-0.5 px-3 py-1 text-slate-400"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-5 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 6v1m4-1v1m4-1v1"/></svg><span class="text-[10px] font-semibold">Business</span></a>
+      <a href="financial_options.html" class="flex flex-col items-center gap-0.5 px-3 py-1 text-teal-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span class="text-[10px] font-bold">Options</span></a>
+      <a href="bprofile.html" class="flex flex-col items-center gap-0.5 px-3 py-1 text-slate-400"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/></svg><span class="text-[10px] font-semibold">Settings</span></a>
+    </div>
+  </nav>
+
+  <!-- HELP MODAL -->
+  <div id="helpModal" class="modal-overlay fixed inset-0 z-[115] flex items-end sm:items-center justify-center" onclick="if(event.target===this)closeHelpModal()">
+    <div class="absolute inset-0 bg-[#0b192c]/60 backdrop-blur-sm"></div>
+    <div class="modal-content relative bg-[#f8faff] rounded-t-3xl sm:rounded-3xl shadow-2xl border border-slate-200/80 w-full sm:max-w-2xl max-h-[92vh] overflow-y-auto hide-scrollbar">
+      <div class="sticky top-0 bg-[#f8faff]/95 backdrop-blur-md z-10 px-6 pt-6 pb-4 border-b border-slate-100">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center flex-shrink-0"><svg class="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.054-1.84 3.772-1.84 2.21 0 4 1.343 4 3 0 1.445-1.147 2.84-2.736 3.16-.79.15-1.388.665-1.388 1.46v.24M12 18h.01"/></svg></div>
+            <h2 class="text-xl font-extrabold text-[#0b192c] tracking-tight">Help Center</h2>
+          </div>
+          <button onclick="closeHelpModal()" class="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-700 transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+        </div>
+      </div>
+      <div class="px-6 py-5 space-y-5">
+        <div class="relative">
+          <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <input type="text" placeholder="Search for help topics..." class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-[#0b192c] placeholder:text-slate-400 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100 transition" />
+        </div>
+        <div>
+          <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Quick Help</h3>
+          <div class="grid grid-cols-2 gap-2.5">
+            <button onclick="showToast('Opening: How eligibility works');closeHelpModal()" class="flex items-center gap-2.5 p-3 bg-white rounded-xl border border-slate-200 hover:border-teal-200 hover:shadow-sm transition text-left"><div class="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center flex-shrink-0"><svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div><div><span class="text-xs font-bold text-[#0b192c] block">Eligibility</span><span class="text-[10px] text-slate-500">How it works</span></div></button>
+            <button onclick="showToast('Opening: Application process');closeHelpModal()" class="flex items-center gap-2.5 p-3 bg-white rounded-xl border border-slate-200 hover:border-teal-200 hover:shadow-sm transition text-left"><div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0"><svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></div><div><span class="text-xs font-bold text-[#0b192c] block">Application</span><span class="text-[10px] text-slate-500">Step-by-step</span></div></button>
+            <button onclick="showToast('Opening: Insurance guide');closeHelpModal()" class="flex items-center gap-2.5 p-3 bg-white rounded-xl border border-slate-200 hover:border-teal-200 hover:shadow-sm transition text-left"><div class="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center flex-shrink-0"><svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg></div><div><span class="text-xs font-bold text-[#0b192c] block">Insurance</span><span class="text-[10px] text-slate-500">Plans & coverage</span></div></button>
+            <button onclick="showToast('Opening: Documents required');closeHelpModal()" class="flex items-center gap-2.5 p-3 bg-white rounded-xl border border-slate-200 hover:border-teal-200 hover:shadow-sm transition text-left"><div class="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0"><svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15l1-5h8l1 5"/></svg></div><div><span class="text-xs font-bold text-[#0b192c] block">Documents</span><span class="text-[10px] text-slate-500">What you need</span></div></button>
+          </div>
+        </div>
+        <div>
+          <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Frequently Asked Questions</h3>
+          <div class="space-y-2">
+            <details class="group bg-white rounded-xl border border-slate-200 overflow-hidden"><summary class="flex items-center justify-between px-4 py-3 cursor-pointer text-sm font-bold text-[#0b192c] hover:bg-slate-50 transition">What is CreditMesh?<svg class="w-4 h-4 text-slate-400 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg></summary><div class="px-4 pb-3 text-xs text-slate-600 leading-relaxed">CreditMesh is an informational profile provider that helps you explore financial products from verified institutions. We do not approve, reject, or guarantee any financial product.</div></details>
+            <details class="group bg-white rounded-xl border border-slate-200 overflow-hidden"><summary class="flex items-center justify-between px-4 py-3 cursor-pointer text-sm font-bold text-[#0b192c] hover:bg-slate-50 transition">How does eligibility check work?<svg class="w-4 h-4 text-slate-400 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg></summary><div class="px-4 pb-3 text-xs text-slate-600 leading-relaxed">We compare your financial profile (income, business vintage, etc.) against the product's basic requirements. Meeting these criteria does not guarantee approval — the final decision is always made by the financial institution.</div></details>
+            <details class="group bg-white rounded-xl border border-slate-200 overflow-hidden"><summary class="flex items-center justify-between px-4 py-3 cursor-pointer text-sm font-bold text-[#0b192c] hover:bg-slate-50 transition">Is my data shared with institutions?<svg class="w-4 h-4 text-slate-400 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg></summary><div class="px-4 pb-3 text-xs text-slate-600 leading-relaxed">Your data is shared only with your explicit consent when you apply for a product. You can manage your data sharing permissions at any time from the Manage Permissions page.</div></details>
+            <details class="group bg-white rounded-xl border border-slate-200 overflow-hidden"><summary class="flex items-center justify-between px-4 py-3 cursor-pointer text-sm font-bold text-[#0b192c] hover:bg-slate-50 transition">What happens after I apply?<svg class="w-4 h-4 text-slate-400 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg></summary><div class="px-4 pb-3 text-xs text-slate-600 leading-relaxed">After submission, the financial institution will review your application, verify your documents, and communicate the decision directly to you. CreditMesh does not participate in the approval process.</div></details>
+            <details class="group bg-white rounded-xl border border-slate-200 overflow-hidden"><summary class="flex items-center justify-between px-4 py-3 cursor-pointer text-sm font-bold text-[#0b192c] hover:bg-slate-50 transition">Are the rates shown current?<svg class="w-4 h-4 text-slate-400 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg></summary><div class="px-4 pb-3 text-xs text-slate-600 leading-relaxed">The rates displayed are demo data for prototype purposes. Actual rates, eligibility, and terms are determined solely by the respective financial institution. Always verify current rates with the institution.</div></details>
+          </div>
+        </div>
+        <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200">
+          <h4 class="text-sm font-bold text-[#0b192c] mb-1">Need more help?</h4>
+          <p class="text-xs text-slate-500 mb-3">Our support team is available to assist you.</p>
+          <div class="flex items-center gap-2">
+            <button onclick="showToast('Opening chat support');closeHelpModal()" class="flex-1 py-2 px-3 bg-[#005f56] hover:bg-[#004e46] text-white text-xs font-bold rounded-xl shadow-md transition text-center">Chat with Us</button>
+            <button onclick="showToast('Opening email support');closeHelpModal()" class="flex-1 py-2 px-3 bg-white hover:bg-slate-100 text-[#0b192c] text-xs font-bold rounded-xl border border-slate-200 transition text-center">Email Support</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INSTITUTION DETAIL MODAL -->
+  <div id="instModal" class="modal-overlay fixed inset-0 z-[100] flex items-end sm:items-center justify-center" onclick="if(event.target===this)closeInstModal()">
+    <div class="absolute inset-0 bg-[#0b192c]/60 backdrop-blur-sm"></div>
+    <div class="modal-content relative bg-[#f8faff] rounded-t-3xl sm:rounded-3xl shadow-2xl border border-slate-200/80 w-full sm:max-w-2xl max-h-[92vh] overflow-y-auto hide-scrollbar">
+      <div class="sticky top-0 bg-[#f8faff]/95 backdrop-blur-md z-10 px-6 pt-6 pb-4 border-b border-slate-100">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div id="modalLogo" class="w-11 h-11 rounded-xl bg-slate-100 flex items-center justify-center font-extrabold text-sm text-slate-600"></div>
+            <div><h2 id="modalName" class="text-xl font-extrabold text-[#0b192c] tracking-tight"></h2><div class="flex items-center gap-2 mt-0.5"><span class="text-[10px] font-bold bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full border border-teal-200">Verified</span><span class="text-[10px] text-slate-400 font-semibold">Demo information</span></div></div>
+          </div>
+          <button onclick="closeInstModal()" class="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-700 transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+        </div>
+      </div>
+      <div id="modalBody" class="px-6 py-5 space-y-6"></div>
+      <div class="px-6 pb-6 pt-3 border-t border-slate-100"><p class="text-[11px] text-slate-400 leading-relaxed text-center">All product information shown is demo data for prototype purposes. Actual rates, eligibility and terms are determined solely by the respective financial institution. CreditMesh does not approve, reject or guarantee any financial product.</p></div>
+    </div>
+  </div>
+
+  <!-- ELIGIBILITY / APPLICATION MODAL -->
+  <div id="eligModal" class="modal-overlay fixed inset-0 z-[110] flex items-end sm:items-center justify-center" onclick="if(event.target===this)closeEligModal()">
+    <div class="absolute inset-0 bg-[#0b192c]/60 backdrop-blur-sm"></div>
+    <div class="modal-content relative bg-[#f8faff] rounded-t-3xl sm:rounded-3xl shadow-2xl border border-slate-200/80 w-full sm:max-w-2xl max-h-[92vh] overflow-y-auto hide-scrollbar">
+      <div class="sticky top-0 bg-[#f8faff]/95 backdrop-blur-md z-10 px-6 pt-6 pb-4 border-b border-slate-100">
+        <div class="flex items-center justify-between">
+          <h2 id="eligTitle" class="text-xl font-extrabold text-[#0b192c] tracking-tight"></h2>
+          <button onclick="closeEligModal()" class="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-700 transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+        </div>
+      </div>
+      <div id="eligBody" class="px-6 py-5"></div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-28 lg:pb-16">
+
+    <!-- PAGE HEADER -->
+    <div class="mb-8">
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-[#0b192c] tracking-tight">Financial Options</h1>
+      <p class="text-sm mt-1.5" style="color:#64748b">Explore financial products from verified financial institutions.</p>
+      <p class="text-sm text-slate-500 mt-1">Compare loan types, interest rates, tenure and eligibility requirements in one place.</p>
+      <div class="flex flex-wrap items-center gap-3 mt-3">
+        <div class="flex items-center gap-1.5"><svg class="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg><span class="text-xs font-semibold text-teal-700">Verified information</span></div>
+        <span class="text-xs text-slate-400">•</span>
+        <span class="text-xs font-semibold text-slate-500">Last updated: Oct 8, 2025</span>
+        <span class="text-xs text-slate-400">•</span>
+        <span class="text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">Demo information</span>
+      </div>
+    </div>
+
+    <!-- CATEGORY FILTERS -->
+    <div class="mb-6">
+      <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-3">Explore by Need</span>
+      <div class="flex items-center gap-2 overflow-x-auto pb-2 hide-scrollbar">
+        <button onclick="filterCat('all')" class="cat-btn active flex-shrink-0 px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-white shadow-sm">All</button>
+        <button onclick="filterCat('home')" class="cat-btn flex-shrink-0 px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 text-sm font-bold shadow-sm hover:border-teal-300 transition">🏠 Home</button>
+        <button onclick="filterCat('education')" class="cat-btn flex-shrink-0 px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 text-sm font-bold shadow-sm hover:border-teal-300 transition">🎓 Education</button>
+        <button onclick="filterCat('vehicle')" class="cat-btn flex-shrink-0 px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 text-sm font-bold shadow-sm hover:border-teal-300 transition">🚗 Vehicle</button>
+        <button onclick="filterCat('healthcare')" class="cat-btn flex-shrink-0 px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 text-sm font-bold shadow-sm hover:border-teal-300 transition">🏥 Healthcare</button>
+        <button onclick="filterCat('business')" class="cat-btn flex-shrink-0 px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 text-sm font-bold shadow-sm hover:border-teal-300 transition">💼 Business</button>
+        <button onclick="filterCat('equipment')" class="cat-btn flex-shrink-0 px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 text-sm font-bold shadow-sm hover:border-teal-300 transition">🛠️ Equipment</button>
+        <button onclick="filterCat('insurance')" class="cat-btn flex-shrink-0 px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 text-sm font-bold shadow-sm hover:border-teal-300 transition">🛡️ Insurance</button>
+        <button onclick="filterCat('savings')" class="cat-btn flex-shrink-0 px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 text-sm font-bold shadow-sm hover:border-teal-300 transition">💰 Savings</button>
+      </div>
+    </div>
+
+    <!-- INSURANCE PLANS SECTION (hidden by default) -->
+    <div id="insuranceSection" class="mb-6 hidden">
+      <div class="flex items-center justify-between mb-1">
+        <div class="flex items-center gap-3">
+          <button onclick="filterCat('all')" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-700 transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg></button>
+          <div><h2 class="text-lg font-extrabold text-[#0b192c]">Insurance Plans</h2><p class="text-xs text-slate-500">Compare and select the right coverage for you</p></div>
+        </div>
+        <span id="insPlanCount" class="text-xs font-semibold text-slate-400"></span>
+      </div>
+      <div class="flex items-center gap-2 mt-4 mb-5">
+        <button onclick="filterInsType('all')" class="ins-type-btn active flex-shrink-0 px-3.5 py-2 rounded-lg border border-slate-200 text-xs font-bold text-white shadow-sm">All Plans</button>
+        <button onclick="filterInsType('health')" class="ins-type-btn flex-shrink-0 px-3.5 py-2 rounded-lg border border-slate-200 bg-white text-slate-600 text-xs font-bold shadow-sm hover:border-teal-300 transition">Health</button>
+        <button onclick="filterInsType('life')" class="ins-type-btn flex-shrink-0 px-3.5 py-2 rounded-lg border border-slate-200 bg-white text-slate-600 text-xs font-bold shadow-sm hover:border-teal-300 transition">Term Life</button>
+      </div>
+      <div id="insPlanGrid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+      <div class="mt-5 p-4 bg-teal-50/60 border border-teal-200/60 rounded-2xl flex items-start gap-3">
+        <svg class="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <div><p class="text-xs font-bold text-teal-800">How insurance eligibility works</p><p class="text-xs text-teal-700 mt-1 leading-relaxed">Click "Check Eligibility" on any plan. We'll verify your profile against the insurer's basic criteria. If eligible, you can proceed to fill the application form. Final approval is always determined by the insurance provider.</p></div>
+      </div>
+    </div>
+
+    <!-- INSTITUTIONS -->
+    <div id="instSection" class="mb-6">
+      <div class="flex items-center justify-between mb-1"><h2 class="text-lg font-extrabold text-[#0b192c]">Verified Financial Institutions</h2><span id="instCount" class="text-xs font-semibold text-slate-400"></span></div>
+      <p class="text-sm text-slate-500 mb-5">Explore financial products offered by participating institutions.</p>
+      <div id="instGrid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    </div>
+
+    <!-- DISCLAIMER -->
+    <div class="bg-[#0b192c] text-white rounded-3xl p-6 sm:p-8 space-y-4 mt-2">
+      <div class="flex items-center gap-2"><svg class="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><h3 class="font-extrabold text-base">Important to know</h3></div>
+      <div class="space-y-2.5">
+        <div class="flex items-start gap-2.5"><svg class="w-4 h-4 text-teal-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg><span class="text-sm text-slate-300">CreditMesh is an <span class="text-white font-semibold">informational profile provider</span>, not a direct lender or insurance provider.</span></div>
+        <div class="flex items-start gap-2.5"><svg class="w-4 h-4 text-teal-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg><span class="text-sm text-slate-300">The <span class="text-white font-semibold">final credit or insurance decision</span> always belongs to the participating financial institution or insurer.</span></div>
+        <div class="flex items-start gap-2.5"><svg class="w-4 h-4 text-teal-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg><span class="text-sm text-slate-300">CreditMesh does not <span class="text-white font-semibold">approve, reject or guarantee</span> any financial product.</span></div>
+      </div>
+    </div>
+
+    <!-- QUICK ACTIONS -->
+    <div class="mt-8 pt-8 border-t border-slate-200/60">
+      <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-4">Quick Actions</span>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <button onclick="showToast('Financial Profile page')" class="flex items-center gap-3 p-4 bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-teal-200 transition group card-hover"><div class="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center flex-shrink-0"><svg class="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 8a6 6 0 016 0c0 4-6 8-6 8s-6-4-6-8a6 6 0 0112 0z"/></svg></div><div class="text-left flex-1"><span class="text-sm font-bold text-[#0b192c]">View My Profile</span><p class="text-[11px] text-slate-500 mt-0.5">Check your reliability score</p></div><svg class="w-4 h-4 text-slate-300 group-hover:text-teal-600 group-hover:translate-x-0.5 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></button>
+        <button onclick="openHelpModal()" class="flex items-center gap-3 p-4 bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-teal-200 transition group card-hover"><div class="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center flex-shrink-0"><svg class="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.054-1.84 3.772-1.84 2.21 0 4 1.343 4 3 0 1.445-1.147 2.84-2.736 3.16-.79.15-1.388.665-1.388 1.46v.24M12 18h.01"/></svg></div><div class="text-left flex-1"><span class="text-sm font-bold text-[#0b192c]">Help Center</span><p class="text-[11px] text-slate-500 mt-0.5">FAQs, guides & support</p></div><svg class="w-4 h-4 text-slate-300 group-hover:text-teal-600 group-hover:translate-x-0.5 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></button>
+        <button onclick="showToast('Manage Permissions page coming soon')" class="flex items-center gap-3 p-4 bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-teal-200 transition group card-hover"><div class="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center flex-shrink-0"><svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg></div><div class="text-left flex-1"><span class="text-sm font-bold text-[#0b192c]">Manage Permissions</span><p class="text-[11px] text-slate-500 mt-0.5">Control your shared data</p></div><svg class="w-4 h-4 text-slate-300 group-hover:text-teal-600 group-hover:translate-x-0.5 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></button>
+      </div>
+    </div>
+  </main>
+
+  <!-- TOAST -->
+  <div id="toast" class="fixed top-6 left-1/2 z-[120] bg-[#0b192c] text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 text-sm font-semibold transition-all duration-300 opacity-0 pointer-events-none max-w-[380px]" style="transform:translateX(-50%) translateY(-16px)"><svg class="w-5 h-5 text-teal-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span id="toastText"></span></div>
+
+  <script>
+    const institutions = [
+      { id:'sbi', name:'State Bank of India', short:'SBI', color:'bg-blue-50 text-blue-700', desc:'Personal, vehicle, education, home and business financial products.', cats:['home','education','vehicle','business','savings'], products:{ home:[{name:'Home Loan',rate:'8.50% p.a.',tenure:'Up to 30 years',amount:'₹5L – ₹2Cr',eligible:'Salaried or self-employed with 2+ years income history',minIncome:25000}], education:[{name:'Education Loan',rate:'8.15% p.a.',tenure:'Up to 15 years',amount:'₹50K – ₹1.5Cr',eligible:'Admission to recognized institution, co-applicant required',minIncome:0}], vehicle:[{name:'Car Loan',rate:'8.65% p.a.',tenure:'Up to 7 years',amount:'₹1L – ₹50L',eligible:'Salaried or self-employed, minimum annual income ₹3L',minIncome:25000},{name:'Two-Wheeler Loan',rate:'9.30% p.a.',tenure:'Up to 5 years',amount:'₹25K – ₹3L',eligible:'Regular income source, age 21–65',minIncome:15000}], business:[{name:'Business Loan',rate:'11.50% p.a.',tenure:'Up to 5 years',amount:'₹1L – ₹50L',eligible:'2+ years business vintage, ITR filed',minIncome:20000,vintage:24},{name:'MSME Loan',rate:'9.75% p.a.',tenure:'Up to 7 years',amount:'₹5L – ₹2Cr',eligible:'Udyam registered, 2+ years operational',minIncome:20000,vintage:24}], savings:[{name:'Fixed Deposit',rate:'6.80% p.a.',tenure:'7 days – 10 years',amount:'₹1K – No limit',eligible:'Resident Indian, any age',minIncome:0}] } },
+      { id:'hdfc', name:'HDFC Bank', short:'HDFC', color:'bg-red-50 text-red-700', desc:'Financial products across personal, vehicle, home and business needs.', cats:['home','vehicle','business','insurance'], products:{ home:[{name:'Home Loan',rate:'8.60% p.a.',tenure:'Up to 30 years',amount:'₹5L – ₹5Cr',eligible:'Salaried or self-employed, 3+ years work experience',minIncome:25000}], vehicle:[{name:'New Car Loan',rate:'8.70% p.a.',tenure:'Up to 7 years',amount:'₹1L – ₹75L',eligible:'Minimum net income ₹25K/month',minIncome:25000},{name:'Used Car Loan',rate:'10.25% p.a.',tenure:'Up to 5 years',amount:'₹1L – ₹50L',eligible:'Vehicle age < 10 years at maturity',minIncome:20000}], business:[{name:'Business Loan',rate:'11.90% p.a.',tenure:'Up to 4 years',amount:'₹50K – ₹50L',eligible:'3+ years business existence, profitable operation',minIncome:20000,vintage:36},{name:'Working Capital',rate:'10.50% p.a.',tenure:'Revolving / 12 months',amount:'₹1L – ₹2Cr',eligible:'Current account with HDFC, 2+ years vintage',minIncome:20000,vintage:24}], insurance:[{name:'Health Insurance',rate:'Premium varies',tenure:'1 year / renew',amount:'₹3L – ₹1Cr cover',eligible:'Age 18–65, no pre-existing waiting period',minIncome:0,isInsurance:true,insType:'health',features:['Cashless hospitalization','Pre & post hospitalization','Day care procedures','Ambulance cover','No claim bonus']},{name:'Term Life',rate:'Premium varies',tenure:'10–40 years',amount:'₹25L – ₹5Cr cover',eligible:'Age 18–55, resident Indian',minIncome:0,isInsurance:true,insType:'life',features:['Death benefit','Accidental death rider','Critical illness rider','Waiver of premium','Tax benefits under 80C']}] } },
+      { id:'icici', name:'ICICI Bank', short:'ICICI', color:'bg-orange-50 text-orange-700', desc:'Explore financing and insurance-related financial products.', cats:['home','education','vehicle','business'], products:{ home:[{name:'Home Loan',rate:'8.75% p.a.',tenure:'Up to 30 years',amount:'₹5L – ₹3Cr',eligible:'Salaried or self-employed with stable income',minIncome:25000}], education:[{name:'Education Loan',rate:'8.50% p.a.',tenure:'Up to 12 years',amount:'₹1L – ₹1Cr',eligible:'Admission confirmation, co-applicant required',minIncome:0}], vehicle:[{name:'Auto Loan',rate:'8.80% p.a.',tenure:'Up to 7 years',amount:'₹1L – ₹60L',eligible:'Regular income, minimum age 21',minIncome:20000}], business:[{name:'Business Loan',rate:'12.25% p.a.',tenure:'Up to 5 years',amount:'₹1L – ₹40L',eligible:'2+ years business, ITR and GST registration',minIncome:20000,vintage:24}] } },
+      { id:'axis', name:'Axis Bank', short:'AXIS', color:'bg-violet-50 text-violet-700', desc:'Personal, education, vehicle and business financial solutions.', cats:['home','education','vehicle','business','insurance'], products:{ home:[{name:'Home Loan',rate:'8.70% p.a.',tenure:'Up to 30 years',amount:'₹3L – ₹5Cr',eligible:'Salaried / self-employed with 2+ years',minIncome:25000}], education:[{name:'Education Loan',rate:'8.45% p.a.',tenure:'Up to 15 years',amount:'₹50K – ₹75L',eligible:'Recognized course admission, guarantor',minIncome:0}], vehicle:[{name:'Car Loan',rate:'8.90% p.a.',tenure:'Up to 7 years',amount:'₹1L – ₹50L',eligible:'Minimum income ₹2.4L p.a.',minIncome:20000}], business:[{name:'Business Loan',rate:'12.00% p.a.',tenure:'Up to 5 years',amount:'₹1L – ₹30L',eligible:'2+ years vintage, profitable business',minIncome:20000,vintage:24}], insurance:[{name:'Health Insurance',rate:'Premium varies',tenure:'1 year / renew',amount:'₹2L – ₹50L cover',eligible:'Age 5–65, family floater available',minIncome:0,isInsurance:true,insType:'health',features:['Family floater option','Cashless network','Maternity benefit','Organ donor cover','Restoration of sum']}] } },
+      { id:'canara', name:'Canara Bank', short:'CB', color:'bg-yellow-50 text-yellow-700', desc:'Government banking with competitive home, education and MSME products.', cats:['home','education','business','savings'], products:{ home:[{name:'Home Loan',rate:'8.40% p.a.',tenure:'Up to 30 years',amount:'₹5L – ₹2Cr',eligible:'Salaried or self-employed, 2+ years income',minIncome:20000}], education:[{name:'Education Loan',rate:'8.10% p.a.',tenure:'Up to 15 years',amount:'₹50K – ₹1Cr',eligible:'Admission to recognized institution',minIncome:0}], business:[{name:'MSME Loan',rate:'9.50% p.a.',tenure:'Up to 7 years',amount:'₹5L – ₹2Cr',eligible:'Udyam registered, 2+ years operational',minIncome:15000,vintage:24}], savings:[{name:'Fixed Deposit',rate:'6.70% p.a.',tenure:'15 days – 10 years',amount:'₹1K – No limit',eligible:'Any resident Indian',minIncome:0}] } },
+      { id:'bob', name:'Bank of Baroda', short:'BOB', color:'bg-emerald-50 text-emerald-700', desc:'Wide range of financial products for individuals and businesses.', cats:['home','education','vehicle','business','healthcare'], products:{ home:[{name:'Home Loan',rate:'8.45% p.a.',tenure:'Up to 30 years',amount:'₹5L – ₹2Cr',eligible:'Regular income, 2+ years employment',minIncome:20000}], education:[{name:'Education Loan',rate:'8.20% p.a.',tenure:'Up to 15 years',amount:'₹50K – ₹80L',eligible:'Valid admission letter, co-applicant',minIncome:0}], vehicle:[{name:'Vehicle Loan',rate:'8.55% p.a.',tenure:'Up to 7 years',amount:'₹1L – ₹40L',eligible:'Age 21–65, regular income',minIncome:15000}], business:[{name:'Business Loan',rate:'10.75% p.a.',tenure:'Up to 5 years',amount:'₹1L – ₹25L',eligible:'2+ years business vintage',minIncome:15000,vintage:24}], healthcare:[{name:'Medical Equipment Loan',rate:'10.50% p.a.',tenure:'Up to 5 years',amount:'₹1L – ₹50L',eligible:'Medical professional or hospital registration',minIncome:20000}] } }
+    ];
+    const catLabels={home:'Home',education:'Education',vehicle:'Vehicle',healthcare:'Healthcare',business:'Business',equipment:'Equipment',insurance:'Insurance',savings:'Savings'};
+    const catEmoji={home:'🏠',education:'🎓',vehicle:'🚗',healthcare:'🏥',business:'💼',equipment:'🛠️',insurance:'🛡️',savings:'💰'};
+    let activeCat='all';
+    let activeInsType='all';
+    const USER={name:'Ravi Kumar',monthlyIncome:28500,businessMonths:6,reliabilityScore:81};
+
+    function openHelpModal(){document.getElementById('helpModal').classList.add('open');document.body.style.overflow='hidden';}
+    function closeHelpModal(){document.getElementById('helpModal').classList.remove('open');document.body.style.overflow='';}
+
+    function renderCards(){
+      const grid=document.getElementById('instGrid');
+      const filtered=activeCat==='all'?institutions:institutions.filter(i=>i.cats.includes(activeCat));
+      document.getElementById('instCount').textContent=filtered.length+' institution'+(filtered.length!==1?'s':'');
+      grid.innerHTML=filtered.map(inst=>{
+        const catBadges=inst.cats.map(c=>`<span class="text-[10px] font-bold text-slate-600 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200">${catEmoji[c]||''} ${catLabels[c]}</span>`).join('');
+        const prodCount=Object.values(inst.products).reduce((s,a)=>s+a.length,0);
+        return `<div class="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-lg shadow-slate-200/40 card-hover space-y-4"><div class="flex items-start gap-3.5"><div class="w-12 h-12 rounded-xl ${inst.color} flex items-center justify-center font-extrabold text-sm flex-shrink-0">${inst.short}</div><div class="flex-1 min-w-0"><div class="flex items-center gap-2"><h3 class="font-extrabold text-[#0b192c] text-sm truncate">${inst.name}</h3><span class="text-[9px] font-bold bg-teal-50 text-teal-700 px-1.5 py-0.5 rounded-full border border-teal-200 flex-shrink-0">Verified</span></div><p class="text-xs text-slate-500 mt-1 leading-relaxed line-clamp-2">${inst.desc}</p></div></div><div class="flex items-center gap-3 text-xs"><span class="font-bold text-[#0b192c]">${prodCount}+ products</span><span class="text-slate-300">|</span><div class="flex items-center gap-1 flex-wrap">${catBadges}</div></div><button onclick="openInstModal('${inst.id}')" class="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-slate-50 hover:bg-slate-100 rounded-xl text-sm font-semibold text-[#0b192c] transition border border-slate-200/60 group">View Options <svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-teal-600 group-hover:translate-x-0.5 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></button></div>`;
+      }).join('');
+    }
+
+    function getInsurancePlans(){const plans=[];institutions.forEach(inst=>{if(!inst.products.insurance)return;inst.products.insurance.forEach(p=>{plans.push({...p,instId:inst.id,instName:inst.name,instShort:inst.short,instColor:inst.color});});});return plans;}
+
+    function renderInsurancePlans(){
+      const grid=document.getElementById('insPlanGrid');let plans=getInsurancePlans();
+      if(activeInsType!=='all'){plans=plans.filter(p=>p.insType===activeInsType);}
+      document.getElementById('insPlanCount').textContent=plans.length+' plan'+(plans.length!==1?'s':'');
+      const typeIcon={health:'<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>',life:'<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path stroke-linecap="round" stroke-linejoin="round" d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>'};
+      grid.innerHTML=plans.map((p,idx)=>{
+        const delayClass=['fade-in-up','fade-in-up fade-in-up-delay-1','fade-in-up fade-in-up-delay-2','fade-in-up fade-in-up-delay-3','fade-in-up fade-in-up-delay-4'][idx%5]||'fade-in-up';
+        const features=(p.features||[]).slice(0,4).map(f=>`<li class="flex items-center gap-1.5 text-xs text-slate-600"><svg class="w-3.5 h-3.5 text-teal-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>${f}</li>`).join('');
+        const typeLabel=p.insType==='health'?'Health':'Term Life';
+        const typeBadgeColor=p.insType==='health'?'bg-rose-50 text-rose-700 border-rose-200':'bg-indigo-50 text-indigo-700 border-indigo-200';
+        return `<div class="${delayClass} bg-white rounded-3xl border border-slate-200/90 shadow-lg shadow-slate-200/40 plan-card overflow-hidden flex flex-col"><div class="p-5 pb-3 flex-1"><div class="flex items-start justify-between mb-3"><div class="flex items-center gap-2.5"><div class="w-10 h-10 rounded-xl ${p.instColor} flex items-center justify-center font-extrabold text-xs flex-shrink-0">${p.instShort}</div><div><h3 class="font-extrabold text-sm text-[#0b192c]">${p.name}</h3><p class="text-[11px] text-slate-500 font-semibold">${p.instName}</p></div></div><span class="text-[10px] font-bold ${typeBadgeColor} px-2 py-0.5 rounded-full border flex-shrink-0">${typeLabel}</span></div><div class="grid grid-cols-2 gap-2.5 mb-3"><div class="bg-slate-50 rounded-xl p-2.5 border border-slate-100"><span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Cover Amount</span><span class="text-xs font-extrabold text-[#0b192c] mt-0.5 block">${p.amount}</span></div><div class="bg-slate-50 rounded-xl p-2.5 border border-slate-100"><span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Tenure</span><span class="text-xs font-extrabold text-[#0b192c] mt-0.5 block">${p.tenure}</span></div></div><div class="flex items-center gap-2 mb-3"><div class="w-7 h-7 rounded-lg bg-teal-50 flex items-center justify-center text-teal-600">${typeIcon[p.insType]||''}</div><div><span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Premium</span><span class="text-sm font-extrabold text-teal-700">${p.rate}</span></div></div>${features?`<ul class="space-y-1.5 mb-1">${features}</ul>`:''}</div><div class="px-5 pb-5 pt-2"><button onclick="openEligModal('${p.instId}','${p.name}','insurance')" class="w-full py-2.5 px-4 bg-[#005f56] hover:bg-[#004e46] text-white text-xs font-bold rounded-xl shadow-md transition">Check Eligibility</button></div></div>`;
+      }).join('');
+    }
+
+    function filterCat(cat){
+      activeCat=cat;
+      document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));
+      event.target.classList.add('active');
+      if(cat==='insurance'){
+        document.getElementById('insuranceSection').classList.remove('hidden');
+        document.getElementById('instSection').classList.add('hidden');
+        renderInsurancePlans();
+      } else {
+        document.getElementById('insuranceSection').classList.add('hidden');
+        document.getElementById('instSection').classList.remove('hidden');
+        renderCards();
+      }
+    }
+
+    function filterInsType(type){
+      activeInsType=type;
+      document.querySelectorAll('.ins-type-btn').forEach(b=>{b.classList.remove('active');b.classList.add('bg-white','text-slate-600');b.classList.remove('text-white');});
+      event.target.classList.add('active','text-white');
+      event.target.classList.remove('bg-white','text-slate-600');
+      renderInsurancePlans();
+    }
+
+    function openInstModal(id){
+      const inst=institutions.find(i=>i.id===id);if(!inst)return;
+      document.getElementById('modalLogo').className=`w-11 h-11 rounded-xl ${inst.color} flex items-center justify-center font-extrabold text-sm`;
+      document.getElementById('modalLogo').textContent=inst.short;
+      document.getElementById('modalName').textContent=inst.name;
+      const body=document.getElementById('modalBody');
+      let html='';
+      Object.entries(inst.products).forEach(([cat,prods])=>{
+        const catLabel=catLabels[cat]||cat;
+        const emoji=catEmoji[cat]||'';
+        html+=`<div><div class="flex items-center gap-2 mb-3"><span class="text-sm">${emoji}</span><h3 class="text-sm font-extrabold text-[#0b192c]">${catLabel} Products</h3><span class="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full">${prods.length}</span></div><div class="space-y-3">`;
+        prods.forEach(p=>{
+          const isIns=!!p.isInsurance;
+          html+=`<div class="bg-white rounded-2xl border border-slate-200 p-4 card-hover"><div class="flex items-start justify-between mb-2.5"><h4 class="font-bold text-sm text-[#0b192c]">${p.name}</h4>${isIns?`<span class="text-[9px] font-bold bg-violet-50 text-violet-700 px-1.5 py-0.5 rounded-full border border-violet-200">Insurance</span>`:''}</div><div class="grid grid-cols-3 gap-2 mb-3"><div class="bg-slate-50 rounded-lg p-2 border border-slate-100"><span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">${isIns?'Cover':'Amount'}</span><span class="text-[11px] font-extrabold text-[#0b192c] mt-0.5 block">${p.amount}</span></div><div class="bg-slate-50 rounded-lg p-2 border border-slate-100"><span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">${isIns?'Premium':'Rate'}</span><span class="text-[11px] font-extrabold text-teal-700 mt-0.5 block">${p.rate}</span></div><div class="bg-slate-50 rounded-lg p-2 border border-slate-100"><span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Tenure</span><span class="text-[11px] font-extrabold text-[#0b192c] mt-0.5 block">${p.tenure}</span></div></div><p class="text-xs text-slate-500 mb-3"><span class="font-semibold text-slate-600">Eligibility:</span> ${p.eligible}</p>`;
+          if(p.features){
+            html+=`<div class="mb-3"><span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Key Features</span><ul class="space-y-1">${p.features.map(f=>`<li class="flex items-center gap-1.5 text-xs text-slate-600"><svg class="w-3 h-3 text-teal-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>${f}</li>`).join('')}</ul></div>`;
+          }
+          html+=`<button onclick="openEligModal('${inst.id}','${p.name}','${cat}')" class="w-full py-2 px-3 bg-slate-50 hover:bg-slate-100 text-[#0b192c] text-xs font-bold rounded-xl border border-slate-200 transition">Check Eligibility</button></div>`;
+        });
+        html+=`</div></div>`;
+      });
+      body.innerHTML=html;
+      document.getElementById('instModal').classList.add('open');
+      document.body.style.overflow='hidden';
+    }
+    function closeInstModal(){document.getElementById('instModal').classList.remove('open');document.body.style.overflow='';}
+
+    function openEligModal(instId,prodName,cat){
+      const inst=institutions.find(i=>i.id===instId);if(!inst)return;
+      const prods=inst.products[cat];if(!prods)return;
+      const prod=prods.find(p=>p.name===prodName);if(!prod)return;
+      document.getElementById('eligTitle').textContent='Eligibility Check — '+prod.name;
+      const body=document.getElementById('eligBody');
+      const incomeOk=USER.monthlyIncome>=prod.minIncome;
+      const vintageOk=prod.vintage?USER.businessMonths>=prod.vintage:true;
+      const eligible=incomeOk&&vintageOk;
+      const steps=[
+        {label:'Income requirement',ok:incomeOk,detail:`Your income: ₹${USER.monthlyIncome.toLocaleString()}/mo • Required: ₹${prod.minIncome.toLocaleString()}/mo`},
+        {label:'Business vintage',ok:vintageOk,detail:prod.vintage?`Your vintage: ${USER.businessMonths} months • Required: ${prod.vintage} months`:'Not applicable for this product'}
+      ];
+      let html=`<div class="space-y-5">
+        <div class="p-4 rounded-2xl border ${eligible?'bg-emerald-50/60 border-emerald-200/60':'bg-rose-50/60 border-rose-200/60'} flex items-start gap-3">
+          <div class="w-10 h-10 rounded-xl ${eligible?'bg-emerald-100 text-emerald-600':'bg-rose-100 text-rose-600'} flex items-center justify-center flex-shrink-0">
+            ${eligible?'<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>':'<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>'}
+          </div>
+          <div>
+            <h3 class="font-extrabold text-sm ${eligible?'text-emerald-800':'text-rose-800'}">${eligible?'You appear eligible!':'Not eligible yet'}</h3>
+            <p class="text-xs ${eligible?'text-emerald-700':'text-rose-700'} mt-1 leading-relaxed">${eligible?'Based on your profile, you meet the basic criteria for this product. Final approval is subject to the institution\'s verification.':'You do not currently meet the basic criteria. This does not mean you cannot apply — final decisions are made by the institution.'}</p>
+          </div>
+        </div>
+        <div class="space-y-3">
+          <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Criteria Breakdown</h4>
+          ${steps.map(s=>`<div class="flex items-start gap-3 p-3 bg-white rounded-xl border border-slate-200"><div class="w-7 h-7 rounded-lg ${s.ok?'bg-emerald-50 text-emerald-600':'bg-rose-50 text-rose-600'} flex items-center justify-center flex-shrink-0">${s.ok?'<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>':'<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>'}</div><div><span class="text-xs font-bold text-[#0b192c] block">${s.label}</span><span class="text-[11px] text-slate-500">${s.detail}</span></div></div>`).join('')}
+        </div>
+        <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200">
+          <h4 class="text-sm font-bold text-[#0b192c] mb-1">Help</h4>
+          <p class="text-xs text-slate-500 leading-relaxed mb-3">Eligibility on CreditMesh is a basic check. Final approval, rates and terms are determined solely by ${inst.name}. Meeting these criteria does not guarantee approval.</p>
+          <button onclick="showToast('Opening application form for ${prod.name}');closeEligModal()" class="w-full py-2.5 px-4 bg-[#005f56] hover:bg-[#004e46] text-white text-xs font-bold rounded-xl shadow-md transition ${eligible?'':'opacity-50 cursor-not-allowed'}" ${eligible?'':'disabled'}>Proceed to Apply</button>
+        </div>
+      </div>`;
+      body.innerHTML=html;
+      document.getElementById('eligModal').classList.add('open');
+      document.body.style.overflow='hidden';
+    }
+    function closeEligModal(){document.getElementById('eligModal').classList.remove('open');document.body.style.overflow='';}
+
+    function showToast(msg){
+      const t=document.getElementById('toast');
+      document.getElementById('toastText').textContent=msg;
+      t.style.opacity='1';t.style.pointerEvents='auto';t.style.transform='translateX(-50%) translateY(0)';
+      clearTimeout(t._timer);
+      t._timer=setTimeout(()=>{t.style.opacity='0';t.style.pointerEvents='none';t.style.transform='translateX(-50%) translateY(-16px)';},2500);
+    }
+
+    renderCards();
+  </script>
+<script src="js/translations.js"></script>
+<script src="js/api.js"></script>
+</body>
+</html>
